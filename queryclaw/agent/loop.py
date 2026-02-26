@@ -114,6 +114,12 @@ class AgentLoop:
                     }
                     for tc in response.tool_calls
                 ]
+                # Moonshot (and some providers) require reasoning_content on assistant messages
+                # that have tool_calls when "thinking" is enabled; omit or re-send to avoid API error.
+                if getattr(response, "reasoning_content", None) is not None:
+                    assistant_msg["reasoning_content"] = response.reasoning_content
+                else:
+                    assistant_msg["reasoning_content"] = ""
                 messages.append(assistant_msg)
 
                 for tc in response.tool_calls:

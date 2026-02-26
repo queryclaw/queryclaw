@@ -189,7 +189,6 @@ pip install queryclaw
 - [AI Column Design](docs/DESIGN_AI_COLUMN.md) ([中文](docs/DESIGN_AI_COLUMN_CN.md))
 - [Skills Roadmap](docs/SKILLS_ROADMAP.md) ([中文](docs/SKILLS_ROADMAP_CN.md))
 - [Self-Evolution Analysis (Tools & Skills)](docs/SELF_EVOLUTION_ANALYSIS.md) ([中文](docs/SELF_EVOLUTION_ANALYSIS_CN.md))
-- [Design for Being Used by Other Agents (v2)](docs/DESIGN_AGENT_CONSUMABILITY_V2.md) ([中文](docs/DESIGN_AGENT_CONSUMABILITY_V2_CN.md))
 
 ## Contributing
 

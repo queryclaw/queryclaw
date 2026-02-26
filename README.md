@@ -161,6 +161,19 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 - Web UI
 - Plugin system for custom tools and adapters
 
+### Vector & AI-Native DB (Phase 4+)
+
+Combining with vector stores and AI-native databases unlocks new capabilities:
+
+| Direction | Highlight |
+|-----------|-----------|
+| **Vector + Schema** | Semantic schema search — find tables/columns by meaning (e.g. "tables about user auth") over large schemas; RAG over schema + docs. |
+| **Vector + Query** | Hybrid queries — SQL filters plus vector similarity (e.g. "orders semantically similar to this description"); works with pgvector or sidecar vector store. |
+| **Vector + Memory** | Semantic recall — memory stored as embeddings; "similar to that slow query we fixed" retrieves past solutions; makes the agent smarter over time. |
+| **Vector + AI Column** | One-click embedding columns — generate and store embeddings for a column (e.g. `description`) for similarity search, dedup, clustering inside the same DB. |
+| **AI-Native DB** | Single agent entry — use the DB's built-in NL2SQL when appropriate; use QueryClaw's ReACT + skills for complex, multi-step, or skill-based tasks. |
+| **AI-Native DB** | Skills on top — Test Data Factory, Data Detective, AI Column, compliance scan; unified memory and audit across relational, vector, and AI-native backends. |
+
 > Detailed architecture plan: [docs/PLAN_ARCHITECTURE.md](docs/PLAN_ARCHITECTURE.md)
 
 ## Installation

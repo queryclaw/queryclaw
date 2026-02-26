@@ -121,11 +121,16 @@ queryclaw/
 │   │   └── loader.py        # Config file loader (~/.queryclaw/config.json)
 │   ├── cli/
 │   │   └── commands.py      # typer CLI (chat, onboard, config)
-│   └── skills/              # Built-in skills (SKILL.md)
-│       ├── data_analysis/
-│       ├── migration/
-│       ├── performance/
-│       └── backup/
+│   └── skills/              # Built-in skills (SKILL.md; see SKILLS_ROADMAP)
+│       ├── ai_column/
+│       ├── test_data_factory/
+│       ├── schema_documenter/
+│       ├── data_detective/
+│       ├── query_translator/
+│       ├── index_advisor/
+│       ├── data_healer/
+│       ├── smart_migrator/
+│       └── ...               # + Anomaly Scanner, Data Masker, etc.
 ├── pyproject.toml
 ├── README.md
 └── LICENSE
@@ -222,12 +227,29 @@ Directly reference nanobot's provider pattern:
 
 ### 4.6 Skills System (`queryclaw/skills/`)
 
-SKILL.md format (same as nanobot), domain-specific:
+Skills use the SKILL.md format (same as nanobot). Each skill encodes a domain workflow so the Agent knows when and how to use it. The full catalog and priorities are in [docs/SKILLS_ROADMAP.md](SKILLS_ROADMAP.md); below is the phase mapping.
 
-- **data_analysis**: Summarize tables, find patterns, generate reports
-- **migration**: Plan schema migrations, generate DDL, preview changes
-- **performance**: Identify slow queries, suggest indexes, analyze query plans
-- **backup**: Export data, create snapshots, restore points
+**By workflow stage:**
+
+| Stage | Skills |
+|-------|--------|
+| **Development** | AI Column, Test Data Factory, Schema Documenter, API Scaffolding |
+| **Debugging** | Data Detective, Query Translator |
+| **Data Quality & Governance** | Data Healer, Data Masker, Anomaly Scanner |
+| **Performance & Operations** | Index Advisor, Change Impact Analyzer, Capacity Planner |
+| **Compliance & Security** | Compliance Scanner, Permission Auditor |
+| **Migration & Evolution** | Smart Migrator, Cross-DB Sync Checker |
+
+**Priority and suggested phase:**
+
+| Priority | Skill | Phase | Value |
+|----------|-------|-------|-------|
+| High | AI Column, Test Data Factory, Data Detective, Schema Documenter | 2 | Core differentiator; developer daily use |
+| Medium | Query Translator | 2 | Low cost, high value |
+| Medium | Index Advisor, Data Healer, Anomaly Scanner, Data Masker, Smart Migrator | 3 | Data governance, operations |
+| Low | Change Impact Analyzer | 3 | Advanced operations |
+| Low | Capacity Planner, Compliance Scanner, Permission Auditor, API Scaffolding | 4 | Enterprise / DBA |
+| Low | Cross-DB Sync Checker | 4+ | After multi-DB support |
 
 ## 5. What Can We Do With a Database Under Agent Control?
 
@@ -279,6 +301,23 @@ This is the exploratory core. Initial capabilities to implement:
 
 ---
 
+### 7.1 Vector & AI-Native Databases (Phase 4+)
+
+Combining with vector stores and AI-native databases adds distinct capabilities:
+
+| Direction | Highlight | Dependency |
+|-----------|-----------|------------|
+| **Vector + Schema** | Semantic table/column search (RAG over schema + docs), scales to large schemas | Vector store (pgvector or dedicated) |
+| **Vector + Query** | Hybrid queries: SQL filters + vector similarity | In-DB or sidecar vector index |
+| **Vector + Memory** | Memory as embeddings; semantic recall of history; smarter over time | Memory table + embeddings or vector store |
+| **Vector + AI Column** | One-click embedding column for similarity search / dedup / clustering | Model API + vector column type |
+| **AI-Native DB** | Single agent entry; use DB as executor; complex tasks orchestrated by QueryClaw | Adapters for each DB's NL/AI API |
+| **AI-Native DB** | Skill layer + unified memory/audit; workflows the DB does not provide | Extend current architecture |
+
+**Implementation notes**: Adapters support vector columns or a vector store (e.g. pgvector, Milvus, Chroma); add tools such as `schema_search_semantic` and hybrid query. AI-native DBs (AlloyDB AI, Oracle Select AI, Snowflake Cortex, etc.) are wrapped as optional tools alongside ReACT tools; memory and audit remain written by QueryClaw to the primary DB.
+
+---
+
 ## 8. Implementation Phases (Updated)
 
 ### Phase 1: MVP -- Read-Only Agent (current)
@@ -298,10 +337,11 @@ This is the exploratory core. Initial capabilities to implement:
 - Human-in-the-loop confirmation for destructive ops
 - PostgreSQL adapter
 - Subagent system (background long tasks)
+- First skills (high priority): AI Column, Test Data Factory, Data Detective, Schema Documenter; Query Translator (medium)
 
 ### Phase 3: Advanced Skills + Memory + Cron
 
-- Built-in skills: data_analysis, migration, performance, backup
+- Skills: Index Advisor, Data Healer, Anomaly Scanner, Data Masker, Smart Migrator; Change Impact Analyzer (low)
 - Persistent memory (operation history, learned schema knowledge)
 - Cron system + Heartbeat (proactive monitoring)
 - Multi-step planning for complex tasks
@@ -312,8 +352,15 @@ This is the exploratory core. Initial capabilities to implement:
 - Message bus + multi-channel output (Telegram, Feishu, etc.)
 - MongoDB adapter
 - Multi-database simultaneous connections
+- Skills (low priority): Capacity Planner, Compliance Scanner, Permission Auditor, API Scaffolding; Cross-DB Sync Checker (Phase 4+)
 - Web UI (optional)
 - Plugin system for custom tools/adapters
+
+### Phase 4+: Vector & AI-Native DB
+
+- Vector store / vector column support (pgvector or sidecar); semantic schema search, hybrid query, vectorized memory
+- AI Column extension: generate embedding columns
+- AI-native DB adapters (wrap built-in NL/AI); unified memory and audit
 
 ---
 

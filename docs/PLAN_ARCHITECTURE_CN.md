@@ -121,11 +121,16 @@ queryclaw/
 │   │   └── loader.py        # 配置加载 (~/.queryclaw/config.json)
 │   ├── cli/
 │   │   └── commands.py      # typer CLI (chat, onboard, config)
-│   └── skills/              # 内置技能 (SKILL.md)
-│       ├── data_analysis/
-│       ├── migration/
-│       ├── performance/
-│       └── backup/
+│   └── skills/              # 内置技能 (SKILL.md；详见 SKILLS_ROADMAP)
+│       ├── ai_column/
+│       ├── test_data_factory/
+│       ├── schema_documenter/
+│       ├── data_detective/
+│       ├── query_translator/
+│       ├── index_advisor/
+│       ├── data_healer/
+│       ├── smart_migrator/
+│       └── ...               # + 异常探测器、数据脱敏等
 ├── pyproject.toml
 ├── README.md
 └── LICENSE
@@ -222,12 +227,29 @@ class SQLAdapter(DatabaseAdapter):
 
 ### 4.6 技能系统 (`queryclaw/skills/`)
 
-SKILL.md 格式（与 nanobot 一致），按领域划分：
+技能采用 SKILL.md 格式（与 nanobot 一致）。每个技能对应一套领域工作流，供 Agent 按场景调用。完整目录与优先级见 [docs/SKILLS_ROADMAP_CN.md](SKILLS_ROADMAP_CN.md)；下表为阶段映射。
 
-- **data_analysis**：汇总表、发现模式、生成报表
-- **migration**：规划 schema 迁移、生成 DDL、预览变更
-- **performance**：定位慢查询、建议索引、分析执行计划
-- **backup**：导出数据、创建快照、恢复点
+**按工作阶段：**
+
+| 阶段 | 技能 |
+|------|------|
+| **开发** | AI 列、测试数据工厂、Schema 文档生成、API 脚手架 |
+| **排查与调试** | 数据侦探、查询翻译器 |
+| **数据质量与治理** | 数据修复师、数据脱敏、异常探测器 |
+| **性能与运维** | 索引顾问、变更影响分析、容量规划师 |
+| **合规与安全** | 合规扫描器、权限审计 |
+| **迁移与演进** | 智能迁移器、跨库同步检查 |
+
+**优先级与建议阶段：**
+
+| 优先级 | 技能 | 阶段 | 价值 |
+|--------|------|------|------|
+| 高 | AI 列、测试数据工厂、数据侦探、Schema 文档生成 | 二 | 核心差异化；开发者日常 |
+| 中 | 查询翻译器 | 二 | 低成本高价值 |
+| 中 | 索引顾问、数据修复师、异常探测器、数据脱敏、智能迁移器 | 三 | 数据治理、运维 |
+| 低 | 变更影响分析 | 三 | 进阶运维 |
+| 低 | 容量规划师、合规扫描器、权限审计、API 脚手架 | 四 | 企业 / DBA |
+| 低 | 跨库同步检查 | 四+ | 多库支持后 |
 
 ## 5. 把数据库交给 Agent 后能做什么？
 
@@ -329,6 +351,25 @@ SKILL.md 格式（与 nanobot 一致），按领域划分：
 
 ---
 
+### 7.1 向量数据库与 AI 原生数据库（阶段四+）
+
+与向量库、AI 原生库结合可形成差异化亮点：
+
+| 方向 | 亮点 | 依赖 |
+|------|------|------|
+| **向量 + Schema** | 语义找表/列（RAG over schema + 文档），大库更稳 | 向量存储（pgvector / 专用向量库） |
+| **向量 + 查询** | 混合查询：SQL 过滤 + 向量相似度 | 库内或侧挂向量索引 |
+| **向量 + 记忆** | 记忆向量化，语义回忆历史，越用越聪明 | 记忆表 + embedding 或向量库 |
+| **向量 + AI 列** | 一键生成 embedding 列，支持相似搜索/去重/聚类 | 模型 API + 向量列类型 |
+| **AI 原生库** | 统一 Agent 入口，库当执行器；复杂任务用 QueryClaw 编排 | 各库 NL/AI API 的适配器 |
+| **AI 原生库** | 技能层 + 统一记忆/审计，补足库本身没有的工作流 | 现有架构扩展 |
+
+**实现要点**：
+- 适配器支持向量列或对接向量库（如 pgvector、Milvus、Chroma）；工具层增加 `schema_search_semantic`、混合查询等。
+- AI 原生库（AlloyDB AI、Oracle Select AI、Snowflake Cortex 等）封装为可选工具，与自有 ReACT 工具并存；记忆与审计仍由 QueryClaw 统一写入主库。
+
+---
+
 ## 8. 实施阶段（更新版）
 
 ### 阶段一：MVP —— 只读 Agent（当前阶段）
@@ -350,10 +391,11 @@ SKILL.md 格式（与 nanobot 一致），按领域划分：
 - 破坏性操作的人机确认
 - PostgreSQL 适配器
 - 子代理系统（后台长任务）
+- 首批技能（高优先级）：AI 列、测试数据工厂、数据侦探、Schema 文档生成；查询翻译器（中）
 
 ### 阶段三：高级技能 + 记忆 + 定时任务
 
-- 内置技能：data_analysis、migration、performance、backup
+- 技能：索引顾问、数据修复师、异常探测器、数据脱敏、智能迁移器；变更影响分析（低）
 - 持久记忆（操作历史、学到的 Schema 知识）
 - 定时任务系统（Cron）+ 主动唤醒（Heartbeat）
 - 复杂任务的多步规划
@@ -364,8 +406,15 @@ SKILL.md 格式（与 nanobot 一致），按领域划分：
 - 消息总线 + 多通道输出（Telegram/飞书等）
 - MongoDB 适配器
 - 多数据库同时连接
+- 技能（低优先级）：容量规划师、合规扫描器、权限审计、API 脚手架；跨库同步检查（阶段四+）
 - Web UI（可选）
 - 自定义工具/适配器插件体系
+
+### 阶段四+：向量与 AI 原生库
+
+- 向量存储/向量列支持（pgvector 或侧挂向量库）；语义 Schema 检索、混合查询、记忆向量化
+- AI 列扩展：生成 embedding 列
+- AI 原生库适配器（封装库自带 NL/AI 能力）；统一记忆与审计
 
 ---
 

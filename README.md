@@ -184,6 +184,7 @@ pip install queryclaw
 
 ## Documentation
 
+- **[User Manual](docs/USER_MANUAL.md)** ([中文](docs/USER_MANUAL_CN.md)) — Install, configure, and use QueryClaw (current version)
 - [Architecture & Implementation Plan](docs/PLAN_ARCHITECTURE.md) ([中文](docs/PLAN_ARCHITECTURE_CN.md))
 - [AI Column Design](docs/DESIGN_AI_COLUMN.md) ([中文](docs/DESIGN_AI_COLUMN_CN.md))
 - [Skills Roadmap](docs/SKILLS_ROADMAP.md) ([中文](docs/SKILLS_ROADMAP_CN.md))

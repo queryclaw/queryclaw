@@ -205,3 +205,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# E2E verification temp files
+scripts/.e2e_tmp/

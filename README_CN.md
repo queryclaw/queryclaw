@@ -14,7 +14,7 @@
 
 **QueryClaw** 是一个 AI 原生数据库 Agent，让你可以把整个数据库实例交给 LLM 驱动的 Agent。想象一下给你的数据库装上一个大脑——它能探索表结构、查询数据、修改记录、诊断性能、甚至用 AI 生成新数据，一切通过自然语言完成。
 
-**这不是又一个 Text-to-SQL 聊天机器人。** QueryClaw 是一个完整的 [ReACT](https://arxiv.org/abs/2210.03629) Agent，能够推理、行动、观察、迭代——就像一个人类 DBA，但更快、不知疲倦。
+**这不是又一个 Text-to-SQL 聊天机器人。** QueryClaw 是一个完整的 [ReACT](https://arxiv.org/abs/2210.03629) Agent，能够推理、行动、观察、迭代——它以开发者思考数据的方式工作，同时具备资深 DBA 的深度。
 
 ### 灵感来源
 

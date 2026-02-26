@@ -14,7 +14,7 @@
 
 **QueryClaw** is an AI-native database agent that lets you hand over an entire database instance to an LLM-powered Agent. Think of it as giving your database a brain — it can explore schemas, query data, modify records, diagnose performance, and even generate new data using AI, all through natural language.
 
-**This is not another Text-to-SQL chatbot.** QueryClaw is a full [ReACT](https://arxiv.org/abs/2210.03629) Agent that reasons, acts, observes, and iterates — just like a human DBA would, but faster and tireless.
+**This is not another Text-to-SQL chatbot.** QueryClaw is a full [ReACT](https://arxiv.org/abs/2210.03629) Agent that reasons, acts, observes, and iterates — it works the way a developer thinks about data, but with the depth of a seasoned DBA.
 
 ### The Idea
 

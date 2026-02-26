@@ -51,29 +51,29 @@ QueryClaw uses a **ReACT (Reasoning + Acting) loop** powered by LLMs, with a mod
 
 ```
                     ┌─────────────────────────┐
-                    │      CLI / Channel      │
-                    └────────────┬────────────┘
+                    │      CLI / Channel       │
+                    └────────────┬─────────────┘
                                  │
-                    ┌────────────▼────────────┐
-                    │   AgentLoop (ReACT)     │
-                    │  Reason → Act → Observe │
-                    │        → Repeat         │
-                    └──┬─────────┬─────────┬──┘
-                       │         │         │
-              ┌────────▼──┐  ┌──▼──────┐  ┌▼────────────┐
-              │  LLM      │  │  Tools  │  │   Skills    │
-              │ Providers  │  │         │  │  (SKILL.md) │
-              └────────────┘  └────┬────┘  └─────────────┘
+                    ┌────────────▼─────────────┐
+                    │   AgentLoop (ReACT)      │
+                    │  Reason → Act → Observe  │
+                    │        → Repeat          │
+                    └──┬──────────┬──────────┬──┘
+                       │          │          │
+              ┌────────▼────┐ ┌──▼──────┐ ┌▼────────────┐
+              │  LLM        │ │  Tools  │ │   Skills     │
+              │  Providers  │ │         │ │  (SKILL.md)  │
+              └─────────────┘ └────┬────┘ └──────────────┘
                                    │
                     ┌──────────────▼──────────────┐
-                    │        Safety Layer         │
+                    │       Safety Layer          │
                     │  Validate → Dry-Run → Audit │
                     └──────────────┬──────────────┘
                                    │
                     ┌──────────────▼──────────────┐
                     │     Database Adapters       │
                     │  MySQL │ SQLite │ PostgreSQL │
-                    └────────────────────────────┘
+                    └─────────────────────────────┘
 ```
 
 **Key design choices:**

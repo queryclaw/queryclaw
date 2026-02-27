@@ -30,20 +30,22 @@ CREATE TABLE IF NOT EXISTS {AUDIT_TABLE} (
 )
 """
 
+# MySQL 5.7+ strict mode: TEXT/BLOB cannot have DEFAULT; omit DEFAULT for TEXT columns.
+# Avoid reserved word "timestamp" by using "logged_at".
 _CREATE_AUDIT_TABLE_MYSQL = f"""
 CREATE TABLE IF NOT EXISTS {AUDIT_TABLE} (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    timestamp DATETIME(3) NOT NULL,
+    logged_at DATETIME(3) NOT NULL,
     session_id VARCHAR(255) DEFAULT '',
     operation_type VARCHAR(50) NOT NULL,
     sql_text TEXT NOT NULL,
     affected_rows INT DEFAULT 0,
     execution_time_ms DOUBLE DEFAULT 0,
-    before_snapshot TEXT DEFAULT '',
-    after_snapshot TEXT DEFAULT '',
-    user_message TEXT DEFAULT '',
+    before_snapshot TEXT,
+    after_snapshot TEXT,
+    user_message TEXT,
     status VARCHAR(20) DEFAULT 'success',
-    metadata TEXT DEFAULT ''
+    metadata TEXT
 )
 """
 
@@ -138,13 +140,38 @@ class AuditLogger:
                     meta_json,
                 ),
             )
+        elif db_type == "mysql":
+            # MySQL uses logged_at (avoids reserved word "timestamp") and %s placeholders
+            placeholder = "%s"
+            sql = (
+                f"INSERT INTO {AUDIT_TABLE} "
+                "(logged_at, session_id, operation_type, sql_text, affected_rows, "
+                "execution_time_ms, before_snapshot, after_snapshot, user_message, status, metadata) "
+                f"VALUES ({', '.join([placeholder] * 11)})"
+            )
+            await self._db.execute(
+                sql,
+                (
+                    now,
+                    entry.session_id or self._session_id,
+                    entry.operation_type,
+                    entry.sql_text,
+                    entry.affected_rows,
+                    entry.execution_time_ms,
+                    entry.before_snapshot,
+                    entry.after_snapshot,
+                    entry.user_message,
+                    entry.status,
+                    meta_json,
+                ),
+            )
         else:
-            placeholder = "%s" if db_type == "mysql" else "?"
+            # SQLite and others: timestamp column, ? placeholders
             sql = (
                 f"INSERT INTO {AUDIT_TABLE} "
                 "(timestamp, session_id, operation_type, sql_text, affected_rows, "
                 "execution_time_ms, before_snapshot, after_snapshot, user_message, status, metadata) "
-                f"VALUES ({', '.join([placeholder] * 11)})"
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
             )
             await self._db.execute(
                 sql,

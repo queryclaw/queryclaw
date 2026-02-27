@@ -48,6 +48,8 @@ class MySQLAdapter(SQLAdapter):
             db=self._database,
             autocommit=True,
             charset="utf8mb4",
+            use_unicode=True,
+            init_command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
         )
 
     async def _ensure_connected(self) -> None:
@@ -93,6 +95,10 @@ class MySQLAdapter(SQLAdapter):
         raise last_error  # type: ignore[misc]
 
     async def _execute_once(self, sql: str, params: tuple | None = None) -> QueryResult:
+        # When no params: escape literal % (e.g. in LIKE '%x%') to %% so the driver
+        # does not treat them as format placeholders ("not enough arguments" error).
+        if not params:
+            sql = sql.replace("%", "%%")
         start = time.monotonic()
         async with self._conn.cursor() as cur:
             await cur.execute(sql, params or ())

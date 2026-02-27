@@ -1,0 +1,15 @@
+---
+description: Release process — update RELEASE_NOTES before publishing
+globs: pyproject.toml, queryclaw/__init__.py, RELEASE_NOTES*.md
+alwaysApply: false
+---
+
+# Release Process
+
+**All version releases MUST update RELEASE_NOTES (both EN and CN) before pushing to GitHub and publishing to PyPI.**
+
+When bumping version or publishing:
+
+1. Update `RELEASE_NOTES.md` and `RELEASE_NOTES_CN.md` with the new version's changes
+2. Move "Unreleased" items to the version section; add release date
+3. See [docs/RELEASE_PROCESS.md](docs/RELEASE_PROCESS.md) for the full checklist

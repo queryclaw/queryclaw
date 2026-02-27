@@ -208,3 +208,7 @@ __marimo__/
 
 # E2E verification temp files
 scripts/.e2e_tmp/
+
+# Editor swap files
+*.swp
+*.swo

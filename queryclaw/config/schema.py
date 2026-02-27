@@ -17,7 +17,7 @@ class Base(BaseModel):
 class DatabaseConfig(Base):
     """Database connection configuration."""
 
-    type: Literal["mysql", "sqlite", "postgresql"] = "sqlite"
+    type: Literal["mysql", "sqlite", "postgresql", "seekdb"] = "sqlite"
     host: str = "localhost"
     port: int = 3306
     database: str = ""

@@ -200,6 +200,24 @@
 
 ---
 
+## 七、向量与 AI 原生数据库
+
+### 17. SeekDB 向量搜索（SeekDB Vector Search）
+
+**痛点**：向量搜索、语义搜索、混合查询需要专门的 SQL（VECTOR 类型、l2_distance、AI_EMBED），开发者可能不熟悉。
+
+**Skill 做什么**：
+- 当用户询问 SeekDB 中的向量搜索、语义搜索、相似文档或混合搜索时
+- 使用 `schema_inspect` 识别 VECTOR 列
+- 指导创建 VECTOR 列和索引
+- 生成带 `APPROXIMATE LIMIT` 的 `l2_distance` / `cosine_distance` 查询
+- 使用 `AI_EMBED` 实现自然语言到向量的搜索
+- 将关键词过滤与向量相似度结合（混合搜索）
+
+**价值**：SeekDB（OceanBase AI 原生搜索库）使用 MySQL 协议，但扩展了 VECTOR、AI_EMBED 和相似度函数。该 Skill 教会 Agent 正确的语法和工作流。
+
+---
+
 ## 优先级总览
 
 | 优先级 | Skill | 建议阶段 | 核心价值 |
@@ -220,6 +238,7 @@
 | 低 | 权限审计 | 阶段五 | 企业场景 |
 | 低 | API 脚手架 | 阶段五 | 开发提效 |
 | 低 | 跨库同步检查 | 阶段五 | 多库支持后 |
+| 中 | SeekDB 向量搜索 | 阶段三 | SeekDB 中的向量/语义搜索 |
 
 ---
 

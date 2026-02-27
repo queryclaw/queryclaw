@@ -200,6 +200,24 @@ Generate or fill a target column based on existing table data using LLM -- summa
 
 ---
 
+## VII. Vector & AI-Native Databases
+
+### 17. SeekDB Vector Search
+
+**Pain point**: Vector search, semantic search, and hybrid queries require specialized SQL (VECTOR type, l2_distance, AI_EMBED) that developers may not know.
+
+**What the Skill does**:
+- When the user asks for vector search, semantic search, similar documents, or hybrid search in SeekDB
+- Use `schema_inspect` to identify VECTOR columns
+- Guide creation of VECTOR columns and indexes
+- Generate `l2_distance` / `cosine_distance` queries with `APPROXIMATE LIMIT`
+- Use `AI_EMBED` for natural-language-to-vector search
+- Combine keyword filters with vector similarity (hybrid search)
+
+**Value**: SeekDB (OceanBase AI-native search DB) uses MySQL protocol but extends with VECTOR, AI_EMBED, and similarity functions. This Skill teaches the Agent the correct syntax and workflow.
+
+---
+
 ## Priority Overview
 
 | Priority | Skill | Suggested Phase | Core Value |
@@ -220,6 +238,7 @@ Generate or fill a target column based on existing table data using LLM -- summa
 | Low | Permission Auditor | Phase 5 | Enterprise scenario |
 | Low | API Scaffolding | Phase 5 | Development productivity |
 | Low | Cross-DB Sync Checker | Phase 5 | After multi-DB support |
+| Medium | SeekDB Vector Search | Phase 3 | Vector/semantic search in SeekDB |
 
 ---
 

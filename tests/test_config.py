@@ -43,6 +43,11 @@ class TestDatabaseConfig:
         assert cfg.type == "postgresql"
         assert cfg.port == 5432
 
+    def test_seekdb_type(self):
+        cfg = DatabaseConfig(type="seekdb", host="localhost", port=2881, database="db1")
+        assert cfg.type == "seekdb"
+        assert cfg.port == 2881
+
     def test_invalid_type_rejected(self):
         with pytest.raises(Exception):
             DatabaseConfig(type="oracle")

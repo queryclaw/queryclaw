@@ -46,6 +46,7 @@ graph TB
         DBRegistry["AdapterRegistry"]
         MySQL["MySQLAdapter"]
         PostgreSQL["PostgreSQLAdapter"]
+        SeekDB["SeekDBAdapter"]
         SQLite["SQLiteAdapter"]
     end
 
@@ -79,6 +80,7 @@ graph TB
     DryRun --> AuditLog
     DBRegistry --> MySQL
     DBRegistry --> PostgreSQL
+    DBRegistry --> SeekDB
     DBRegistry --> SQLite
 ```
 
@@ -112,6 +114,7 @@ queryclaw/
 │   │   ├── registry.py      # Adapter registry (by db type)
 │   │   ├── mysql.py         # MySQL adapter
 │   │   ├── postgresql.py    # PostgreSQL adapter
+│   │   ├── seekdb.py        # SeekDB adapter (AI-native search, MySQL protocol)
 │   │   └── sqlite.py        # SQLite adapter
 │   ├── safety/
 │   │   ├── validator.py     # AST-based SQL validation
@@ -307,6 +310,7 @@ This is the exploratory core. Initial capabilities to implement:
 | **MySQL** | Phase 1 (primary) | `SQLAdapter` | Most common production DB |
 | **SQLite** | Phase 1 | `SQLAdapter` | Zero-config for dev/test/demo |
 | **PostgreSQL** | Phase 2-3 | `SQLAdapter` | Rich ecosystem, advanced SQL |
+| **SeekDB** | Phase 3 | `SQLAdapter` | AI-native search DB (OceanBase), MySQL protocol, VECTOR, AI_EMBED |
 | **MongoDB** | Phase 5 | `DocumentAdapter` | Document-oriented, MQL |
 | **Redis** | Phase 5 | `KVAdapter` | Key-Value, command-based |
 | **Elasticsearch** | Future | `SearchAdapter` | Full-text search & analytics |

@@ -4,6 +4,24 @@
 
 ---
 
+## 0.4.11 (2026-02-26)
+
+### Features
+
+- **SeekDB adapter**: New database adapter for SeekDB (OceanBase AI-native search database). Uses MySQL protocol, default port 2881. Supports VECTOR type, l2_distance, cosine_distance, AI_EMBED.
+- **SeekDB Vector Search skill**: New skill `seekdb_vector_search` for vector search, semantic search, AI_EMBED, and hybrid search workflows in SeekDB.
+
+### Changes
+
+- `queryclaw/db/seekdb.py`: SeekDBAdapter extends MySQLAdapter.
+- `queryclaw/skills/seekdb_vector_search/SKILL.md`: Vector search workflow documentation.
+- `queryclaw/db/registry.py`: Registered `seekdb` adapter.
+- `queryclaw/config/schema.py`: Added `seekdb` to DatabaseConfig.type.
+- README, USER_MANUAL, PLAN_ARCHITECTURE, SKILLS_ROADMAP: Updated (EN + ZH) with SeekDB.
+- Tests: Added SeekDB adapter tests (integration tests skip when no SeekDB instance).
+
+---
+
 ## 0.4.10 (2026-02-27)
 
 ### Changes

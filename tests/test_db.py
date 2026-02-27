@@ -1,5 +1,7 @@
 """Tests for database adapter layer."""
 
+import os
+
 import pytest
 import pytest_asyncio
 
@@ -10,8 +12,9 @@ from queryclaw.db.base import (
     QueryResult,
     TableInfo,
 )
-from queryclaw.db.sqlite import SQLiteAdapter
 from queryclaw.db.registry import AdapterRegistry
+from queryclaw.db.seekdb import SeekDBAdapter
+from queryclaw.db.sqlite import SQLiteAdapter
 
 
 class TestQueryResult:
@@ -75,6 +78,7 @@ class TestAdapterRegistry:
         assert "sqlite" in types
         assert "mysql" in types
         assert "postgresql" in types
+        assert "seekdb" in types
 
     def test_create_sqlite(self):
         adapter = AdapterRegistry.create("sqlite")
@@ -88,6 +92,10 @@ class TestAdapterRegistry:
         adapter = AdapterRegistry.create("postgresql")
         assert adapter.db_type == "postgresql"
 
+    def test_create_seekdb(self):
+        adapter = AdapterRegistry.create("seekdb")
+        assert adapter.db_type == "seekdb"
+
     def test_create_unknown_raises(self):
         with pytest.raises(ValueError, match="Unsupported database type"):
             AdapterRegistry.create("oracle")
@@ -95,6 +103,7 @@ class TestAdapterRegistry:
     def test_get(self):
         assert AdapterRegistry.get("sqlite") is not None
         assert AdapterRegistry.get("postgresql") is not None
+        assert AdapterRegistry.get("seekdb") is not None
         assert AdapterRegistry.get("oracle") is None
 
 
@@ -208,3 +217,41 @@ class TestSQLiteAdapter:
 
     async def test_db_type(self, adapter):
         assert adapter.db_type == "sqlite"
+
+
+class TestSeekDBAdapter:
+    """Unit tests for SeekDBAdapter. Integration tests require SEEKDB_AVAILABLE=1."""
+
+    def test_db_type(self):
+        adapter = SeekDBAdapter()
+        assert adapter.db_type == "seekdb"
+
+    def test_inherits_mysql_adapter(self):
+        from queryclaw.db.mysql import MySQLAdapter
+
+        assert issubclass(SeekDBAdapter, MySQLAdapter)
+
+
+@pytest.mark.asyncio
+class TestSeekDBAdapterIntegration:
+    """Integration tests for SeekDBAdapter. Skip when no SeekDB instance."""
+
+    @pytest.mark.skipif(
+        not os.environ.get("SEEKDB_AVAILABLE"),
+        reason="No SeekDB instance (set SEEKDB_AVAILABLE=1 to run)",
+    )
+    async def test_connect_and_execute(self):
+        a = SeekDBAdapter()
+        await a.connect(
+            host=os.environ.get("SEEKDB_HOST", "localhost"),
+            port=int(os.environ.get("SEEKDB_PORT", "2881")),
+            database=os.environ.get("SEEKDB_DATABASE", "test"),
+            user=os.environ.get("SEEKDB_USER", "root"),
+            password=os.environ.get("SEEKDB_PASSWORD", ""),
+        )
+        try:
+            result = await a.execute("SELECT 1 AS val")
+            assert result.columns == ["val"]
+            assert result.rows == [(1,)]
+        finally:
+            await a.close()

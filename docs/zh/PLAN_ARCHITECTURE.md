@@ -46,6 +46,7 @@ graph TB
         DBRegistry["AdapterRegistry"]
         MySQL["MySQLAdapter"]
         PostgreSQL["PostgreSQLAdapter"]
+        SeekDB["SeekDBAdapter"]
         SQLite["SQLiteAdapter"]
     end
 
@@ -79,6 +80,7 @@ graph TB
     DryRun --> AuditLog
     DBRegistry --> MySQL
     DBRegistry --> PostgreSQL
+    DBRegistry --> SeekDB
     DBRegistry --> SQLite
 ```
 
@@ -112,6 +114,7 @@ queryclaw/
 │   │   ├── registry.py      # 按数据库类型注册适配器
 │   │   ├── mysql.py         # MySQL 适配器
 │   │   ├── postgresql.py    # PostgreSQL 适配器
+│   │   ├── seekdb.py        # SeekDB 适配器（AI 原生搜索，MySQL 协议）
 │   │   └── sqlite.py        # SQLite 适配器
 │   ├── safety/
 │   │   ├── validator.py    # 基于 AST 的 SQL 校验
@@ -345,6 +348,7 @@ class SQLAdapter(DatabaseAdapter):
 | **MySQL** | 阶段一（首要） | `SQLAdapter` | 最常用的生产数据库 |
 | **SQLite** | 阶段一 | `SQLAdapter` | 零配置，开发/测试/演示用 |
 | **PostgreSQL** | 阶段二~三 | `SQLAdapter` | 生态丰富，高级 SQL 特性 |
+| **SeekDB** | 阶段三 | `SQLAdapter` | AI 原生搜索库（OceanBase），MySQL 协议，VECTOR、AI_EMBED |
 | **MongoDB** | 阶段五 | `DocumentAdapter` | 文档型，MQL 代替 SQL |
 | **Redis** | 阶段五 | `KVAdapter` | Key-Value，命令式交互 |
 | **Elasticsearch** | 远期 | `SearchAdapter` | 全文搜索与分析 |

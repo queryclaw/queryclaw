@@ -144,7 +144,7 @@ Configuration is stored in **JSON** at `~/.queryclaw/config.json` by default. Yo
 
 | Field      | Type   | Default    | Description |
 |-----------|--------|------------|-------------|
-| `type`    | string | `"sqlite"` | `"sqlite"` or `"mysql"`. |
+| `type`    | string | `"sqlite"` | `"sqlite"`, `"mysql"`, `"postgresql"`, or `"seekdb"`. |
 | `host`    | string | `"localhost"` | Server host (MySQL). |
 | `port`    | int    | `3306`     | Server port (MySQL). |
 | `database`| string | `""`       | DB name (MySQL) or path to file (SQLite, e.g. `"/path/to/app.db"`). |
@@ -170,6 +170,19 @@ Configuration is stored in **JSON** at `~/.queryclaw/config.json` by default. Yo
   "database": "mydb",
   "user": "myuser",
   "password": "mypass"
+}
+```
+
+**SeekDB example** (AI-native search DB, default port 2881):
+
+```json
+"database": {
+  "type": "seekdb",
+  "host": "localhost",
+  "port": 2881,
+  "database": "db1",
+  "user": "root",
+  "password": "***"
 }
 ```
 
@@ -426,6 +439,7 @@ Skills guide the agent’s behavior for certain kinds of tasks. The agent loads 
 - **SQLite:** Ensure `database.database` is the full path to an existing `.db` file and that the process has read permission.  
 - **MySQL:** Check `host`, `port`, `database`, `user`, `password`. Ensure the MySQL server allows connections from your host and that the user has SELECT (and schema) privileges.  
 - **PostgreSQL:** Check `host`, `port`, `database`, `user`, `password`. Default port is `5432`. Ensure `asyncpg` is installed (`pip install queryclaw[postgresql]`).
+- **SeekDB:** Same as MySQL (uses aiomysql). Default port is `2881`. Supports VECTOR type, `l2_distance`, `AI_EMBED` for vector/semantic search.
 
 ### Wrong provider or model
 

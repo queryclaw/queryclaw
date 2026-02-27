@@ -4,6 +4,24 @@
 
 ---
 
+## 0.4.11 (2026-02-26)
+
+### 功能
+
+- **SeekDB 适配器**：新增 SeekDB（OceanBase AI 原生搜索数据库）适配器。使用 MySQL 协议，默认端口 2881。支持 VECTOR 类型、l2_distance、cosine_distance、AI_EMBED。
+- **SeekDB 向量搜索技能**：新增 `seekdb_vector_search` 技能，用于 SeekDB 中的向量搜索、语义搜索、AI_EMBED 和混合搜索工作流。
+
+### 变更
+
+- `queryclaw/db/seekdb.py`：SeekDBAdapter 继承 MySQLAdapter。
+- `queryclaw/skills/seekdb_vector_search/SKILL.md`：向量搜索工作流说明。
+- `queryclaw/db/registry.py`：注册 `seekdb` 适配器。
+- `queryclaw/config/schema.py`：在 DatabaseConfig.type 中新增 `seekdb`。
+- README、USER_MANUAL、PLAN_ARCHITECTURE、SKILLS_ROADMAP：更新（中英）以包含 SeekDB。
+- 测试：新增 SeekDB 适配器测试（无 SeekDB 实例时跳过集成测试）。
+
+---
+
 ## 0.4.10 (2026-02-27)
 
 ### 变更

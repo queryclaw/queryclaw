@@ -142,7 +142,7 @@ queryclaw --version
 
 | 字段       | 类型   | 默认值       | 说明 |
 |------------|--------|--------------|------|
-| `type`     | string | `"sqlite"`   | `"sqlite"` 或 `"mysql"`。 |
+| `type`     | string | `"sqlite"`   | `"sqlite"`、`"mysql"`、`"postgresql"` 或 `"seekdb"`。 |
 | `host`     | string | `"localhost"`| 主机（MySQL）。 |
 | `port`     | int    | `3306`       | 端口（MySQL）。 |
 | `database` | string | `""`         | 数据库名（MySQL）或 SQLite 文件路径（如 `"/path/to/app.db"`）。 |
@@ -181,6 +181,19 @@ queryclaw --version
   "database": "mydb",
   "user": "postgres",
   "password": "mypass"
+}
+```
+
+**SeekDB 示例**（AI 原生搜索库，默认端口 2881）：
+
+```json
+"database": {
+  "type": "seekdb",
+  "host": "localhost",
+  "port": 2881,
+  "database": "db1",
+  "user": "root",
+  "password": "***"
 }
 ```
 
@@ -435,6 +448,7 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 - **SQLite：** 确认 `database.database` 为存在的 `.db` 文件完整路径，且当前用户有读权限。  
 - **MySQL：** 检查 `host`、`port`、`database`、`user`、`password`；确认 MySQL 允许当前主机连接，且该用户具备 SELECT 及元数据查询权限。  
 - **PostgreSQL：** 检查 `host`、`port`、`database`、`user`、`password`；默认端口为 `5432`。需确保已安装 `asyncpg`（`pip install queryclaw[postgresql]`）。
+- **SeekDB：** 与 MySQL 相同（使用 aiomysql）。默认端口为 `2881`。支持 VECTOR 类型、`l2_distance`、`AI_EMBED` 等向量/语义搜索。
 
 ### 用错提供方或模型
 

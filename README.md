@@ -72,13 +72,13 @@ QueryClaw uses a **ReACT (Reasoning + Acting) loop** powered by LLMs, with a mod
                                    │
                     ┌──────────────▼──────────────┐
                     │     Database Adapters       │
-                    │  MySQL │ SQLite │ PostgreSQL │
+                    │  MySQL │ SQLite │ PostgreSQL │ SeekDB │
                     └─────────────────────────────┘
 ```
 
 **Key design choices:**
 
-- **Multi-database**: Adapter-based architecture supports MySQL (primary), SQLite, PostgreSQL, with extensibility for MongoDB, Redis, and more
+- **Multi-database**: Adapter-based architecture supports MySQL (primary), SQLite, PostgreSQL, SeekDB (AI-native search), with extensibility for MongoDB, Redis, and more
 - **Multi-LLM**: Unified provider layer via [LiteLLM](https://github.com/BerriAI/litellm) — use OpenAI, Anthropic, Gemini, DeepSeek, or any compatible API
 - **Extensible skills**: Add new capabilities via `SKILL.md` files — no code changes needed
 - **Safety-first**: Progressive safety with policy checks, SQL AST validation, dry-runs, transaction wrapping, human confirmation, and full audit logging
@@ -122,6 +122,7 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 | **Data Masker** | Auto-detect PII columns and generate realistic anonymized data |
 | **Anomaly Scanner** | Proactively detect outliers, distribution shifts, and suspicious patterns |
 | **Smart Migrator** | Generate migration scripts from natural language, with rollback and dry-run |
+| **SeekDB Vector Search** | Vector search, semantic search, AI_EMBED, hybrid search in SeekDB (OceanBase AI-native DB) |
 
 > Full list with priorities: [docs/SKILLS_ROADMAP.md](docs/SKILLS_ROADMAP.md)
 

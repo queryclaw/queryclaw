@@ -4,6 +4,22 @@
 
 ---
 
+## 0.4.7 (2026-02-26)
+
+### Features
+
+- **Channel-mode confirmation flow**: When `require_confirmation=True`, destructive operations (INSERT/UPDATE/DELETE/DDL) in Feishu/DingTalk now prompt for user confirmation instead of being rejected. Users reply "确认" or "取消" in the chat to proceed or abort.
+- **ConfirmationStore**: Tracks pending confirmations per session; inbound messages with confirm/cancel keywords resolve the pending future before reaching the agent.
+- **Tests**: Added `TestChannelConfirmation` in `test_bus_channels.py` for intercept, keyword parsing, and cancel behavior.
+
+### Changes
+
+- `MessageBus`: Added `register_confirmation`, `cancel_confirmation`; `publish_inbound` intercepts confirm/cancel replies for pending sessions.
+- `AgentLoop`: Sets `_current_msg` during processing for channel callback to access session context.
+- `cli/commands.py`: `_channel_confirm_callback` sends confirmation prompt via outbound and awaits user reply (300s timeout).
+
+---
+
 ## 0.4.6 (2026-02-27)
 
 ### Changes

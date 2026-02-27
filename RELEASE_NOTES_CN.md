@@ -4,6 +4,22 @@
 
 ---
 
+## 0.4.7 (2026-02-26)
+
+### 功能
+
+- **通道模式确认流程**：当 `require_confirmation=True` 时，飞书/钉钉中的破坏性操作（INSERT/UPDATE/DELETE/DDL）现会向用户发起确认提示，而非直接拒绝。用户在聊天中回复「确认」或「取消」以执行或中止。
+- **ConfirmationStore**：按会话跟踪待确认项；含确认/取消关键词的入站消息会在到达 Agent 前解析并完成对应 Future。
+- **测试**：在 `test_bus_channels.py` 中新增 `TestChannelConfirmation`，覆盖拦截、关键词解析及取消逻辑。
+
+### 变更
+
+- `MessageBus`：新增 `register_confirmation`、`cancel_confirmation`；`publish_inbound` 会拦截有待确认会话的确认/取消回复。
+- `AgentLoop`：处理消息时设置 `_current_msg`，供通道回调获取会话上下文。
+- `cli/commands.py`：`_channel_confirm_callback` 通过 outbound 发送确认提示，并等待用户回复（300 秒超时）。
+
+---
+
 ## 0.4.6 (2026-02-27)
 
 ### 变更

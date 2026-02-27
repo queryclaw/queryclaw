@@ -76,6 +76,7 @@ class AgentLoop:
         self.subagent_spawner = SubAgentSpawner(provider, db, model=self.model)
         self._sessions: dict[str, MemoryStore] = {}
         self._running = False
+        self._current_msg: Any = None
 
         self._register_default_tools(max_query_rows, enable_subagent)
 
@@ -244,6 +245,16 @@ class AgentLoop:
 
     async def _process_message(self, msg: Any) -> Any | None:
         """Process a single inbound message and return the outbound response."""
+        from queryclaw.bus.events import OutboundMessage
+
+        self._current_msg = msg
+        try:
+            return await self._process_message_impl(msg)
+        finally:
+            self._current_msg = None
+
+    async def _process_message_impl(self, msg: Any) -> Any | None:
+        """Implementation of message processing."""
         from queryclaw.bus.events import OutboundMessage
 
         session_key = msg.session_key

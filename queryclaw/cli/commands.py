@@ -17,6 +17,7 @@ from prompt_toolkit.patch_stdout import patch_stdout
 
 from queryclaw import __version__
 from queryclaw.agent.loop import AgentLoop
+from queryclaw.bus.events import OutboundMessage
 from queryclaw.bus.queue import MessageBus
 from queryclaw.channels.manager import ChannelManager
 from queryclaw.config.loader import get_config_path, load_config, save_config
@@ -232,6 +233,37 @@ def chat(
         raise typer.Exit(code=exit_code)
 
 
+async def _channel_confirm_callback(
+    agent_ref: list,
+    bus: MessageBus,
+    sql: str,
+    confirm_msg: str,
+) -> bool:
+    """Channel-mode confirmation: send prompt, await user reply (confirm/cancel)."""
+    agent = agent_ref[0]
+    if agent is None:
+        return False
+    msg = getattr(agent, "_current_msg", None)
+    if msg is None:
+        return False
+    session_key = msg.session_key
+    loop = asyncio.get_event_loop()
+    future: asyncio.Future[bool] = loop.create_future()
+    bus.register_confirmation(session_key, future, confirm_msg[:100])
+    await bus.publish_outbound(
+        OutboundMessage(
+            channel=msg.channel,
+            chat_id=msg.chat_id,
+            content=f"{confirm_msg}\n\n回复 **确认** 执行，**取消** 取消。",
+        )
+    )
+    try:
+        return await asyncio.wait_for(future, timeout=300)
+    except asyncio.TimeoutError:
+        bus.cancel_confirmation(session_key)
+        return False
+
+
 async def _run_serve(config: Config) -> None:
     """Run the multi-channel serve mode."""
     bus = MessageBus()
@@ -253,6 +285,11 @@ async def _run_serve(config: Config) -> None:
             blocked_patterns=config.safety.blocked_patterns,
             audit_enabled=config.safety.audit_enabled,
         )
+        agent_ref: list = [None]
+
+        async def channel_confirm(sql: str, confirm_msg: str) -> bool:
+            return await _channel_confirm_callback(agent_ref, bus, sql, confirm_msg)
+
         agent = AgentLoop(
             provider=provider,
             db=adapter,
@@ -261,9 +298,10 @@ async def _run_serve(config: Config) -> None:
             temperature=config.agent.temperature,
             max_tokens=config.agent.max_tokens,
             safety_policy=safety,
-            confirmation_callback=None,  # Channel mode: reject destructive ops
+            confirmation_callback=channel_confirm,
             bus=bus,
         )
+        agent_ref[0] = agent
 
         manager_task = asyncio.create_task(manager.start_all())
         agent_task = asyncio.create_task(agent.run())

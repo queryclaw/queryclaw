@@ -220,8 +220,6 @@ pip install queryclaw[all]
 - **[User Manual](docs/USER_MANUAL.md)** ([中文](docs/USER_MANUAL_CN.md)) — Install, configure, and use QueryClaw (current version)
 - **[Release Notes](RELEASE_NOTES.md)** ([中文](RELEASE_NOTES_CN.md)) — Version history and changelog
 - [Architecture & Implementation Plan](docs/PLAN_ARCHITECTURE.md) ([中文](docs/PLAN_ARCHITECTURE_CN.md))
-- [Phase 4 Multi-Channel Plan](docs/PLAN_PHASE4_CHANNELS.md) ([中文](docs/PLAN_PHASE4_CHANNELS_CN.md))
-- [AI Column Design](docs/DESIGN_AI_COLUMN.md) ([中文](docs/DESIGN_AI_COLUMN_CN.md))
 - [Skills Roadmap](docs/SKILLS_ROADMAP.md) ([中文](docs/SKILLS_ROADMAP_CN.md))
 - [Self-Evolution Analysis (Tools & Skills)](docs/SELF_EVOLUTION_ANALYSIS.md) ([中文](docs/SELF_EVOLUTION_ANALYSIS_CN.md))
 

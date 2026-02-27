@@ -220,8 +220,6 @@ pip install queryclaw[all]
 - **[用户手册](docs/USER_MANUAL_CN.md)**（[English](docs/USER_MANUAL.md)）— 安装、配置与使用（当前版本）
 - **[版本说明](RELEASE_NOTES_CN.md)**（[English](RELEASE_NOTES.md)）— 版本历史与更新日志
 - [架构与实施计划](docs/PLAN_ARCHITECTURE_CN.md)（[English](docs/PLAN_ARCHITECTURE.md)）
-- [阶段四多通道计划](docs/PLAN_PHASE4_CHANNELS_CN.md)（[English](docs/PLAN_PHASE4_CHANNELS.md)）
-- [AI 列设计文档](docs/DESIGN_AI_COLUMN_CN.md)（[English](docs/DESIGN_AI_COLUMN.md)）
 - [Skills 路线图](docs/SKILLS_ROADMAP_CN.md)（[English](docs/SKILLS_ROADMAP.md)）
 - [自我演进分析（Tools 与 Skills）](docs/SELF_EVOLUTION_ANALYSIS_CN.md)（[English](docs/SELF_EVOLUTION_ANALYSIS.md)）
 

@@ -22,7 +22,7 @@
 
 | | OpenClaw / nanobot | QueryClaw |
 |---|---|---|
-| **Controls** | Operating System | Database Instance |
+| **Controls** | Operating System | Database |
 | **Interface** | Shell, filesystem, browser | SQL, schema, data |
 | **Safety** | Sandboxed execution | Transaction rollback, dry-run, audit |
 | **Audience** | General users | Application developers & DBAs |

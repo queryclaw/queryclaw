@@ -4,6 +4,15 @@
 
 ---
 
+## 0.4.6 (2026-02-27)
+
+### Changes
+
+- **Removed `queryclaw feishu-test`**: The CLI command was removed. Use `queryclaw serve` to establish the Feishu WebSocket connection before saving event subscription in the Feishu console.
+- USER_MANUAL_CN: Updated event subscription and troubleshooting steps to remove feishu-test references.
+
+---
+
 ## 0.4.5 (2026-02-27)
 
 ### Changes

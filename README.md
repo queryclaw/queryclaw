@@ -137,18 +137,16 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 - Configuration system
 - Basic skill loading
 
-### Phase 2: Write Operations + Safety *(in progress)*
+### Phase 2: Write Operations + Safety *(completed)*
 
-- **Done (Batch A+B):**
-  - PostgreSQL adapter (asyncpg)
-  - Safety layer: policy engine, SQL AST validator, dry-run engine, audit logger
-  - Subagent system: `spawn_subagent` tool for delegated tasks
-  - Read-only skills: Schema Documenter, Query Translator, Data Detective
-  - `SafetyConfig` in configuration system
-- **Upcoming (Batch C+D):**
-  - Write tools: `data_modify`, `ddl_execute`, `transaction`
-  - Human-in-the-loop confirmation flow
-  - Write skills: AI Column, Test Data Factory
+- PostgreSQL adapter (asyncpg)
+- Safety layer: policy engine, SQL AST validator, dry-run engine, audit logger
+- Subagent system: `spawn_subagent` tool for delegated tasks
+- Write tools: `data_modify`, `ddl_execute`, `transaction`
+- Human-in-the-loop confirmation flow for destructive operations
+- Read-only skills: Schema Documenter, Query Translator, Data Detective
+- Write skills: AI Column, Test Data Factory
+- `SafetyConfig` in configuration system
 
 ### Phase 3: Advanced Skills + Memory
 

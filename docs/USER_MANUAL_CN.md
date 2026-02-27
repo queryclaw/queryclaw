@@ -1,6 +1,6 @@
 # QueryClaw 用户手册
 
-**版本 0.2.x** — 带安全层、PostgreSQL 支持和子代理系统的数据库 Agent
+**版本 0.3.x** — 带写操作、安全层、PostgreSQL 支持和子代理系统的数据库 Agent
 
 本文介绍如何安装、配置和使用 QueryClaw，通过自然语言与数据库对话。
 
@@ -25,13 +25,14 @@
 
 QueryClaw 是一个 **AI 原生数据库 Agent**，可以用自然语言向数据库提问。Agent 使用 **ReACT 循环**（推理 + 行动）：查看表结构、执行只读 SQL、查看执行计划，均通过自然语言完成。
 
-**当前版本（0.2.x）** 支持：
+**当前版本（0.3.x）** 支持：
 
 - **数据库：** SQLite、MySQL、PostgreSQL  
 - **LLM 提供方：** OpenRouter、Anthropic、OpenAI、DeepSeek、Gemini、DashScope、Moonshot（通过 [LiteLLM](https://github.com/BerriAI/litellm)）  
-- **工具：** 结构查看、只读查询执行、EXPLAIN 计划、子代理委派  
-- **安全层：** 策略引擎、SQL AST 校验器、试跑引擎、审计日志  
-- **技能：** 数据分析、Schema 文档生成、查询翻译器、数据侦探  
+- **只读工具：** 结构查看、只读查询执行、EXPLAIN 计划、子代理委派  
+- **写入工具：** `data_modify`（INSERT/UPDATE/DELETE）、`ddl_execute`（CREATE/ALTER/DROP）、`transaction`（BEGIN/COMMIT/ROLLBACK）  
+- **安全层：** 策略引擎、SQL AST 校验器、试跑引擎、人工确认、审计日志  
+- **技能：** 数据分析、Schema 文档生成、查询翻译器、数据侦探、AI 列、测试数据工厂  
 - **CLI：** `onboard`（创建配置）、`chat`（交互或单轮对话）
 
 ---
@@ -65,7 +66,7 @@ pip install queryclaw[all]
 安装指定版本：
 
 ```bash
-pip install queryclaw==0.2.0
+pip install queryclaw==0.3.0
 ```
 
 验证：
@@ -308,6 +309,8 @@ queryclaw chat -c /path/to/config.json
 
 Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用。
 
+### 只读工具
+
 | 工具                 | 说明 |
 |---------------------|------|
 | **schema_inspect**  | 列出表；查看指定表的列、索引、外键。 |
@@ -315,7 +318,17 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 | **explain_plan**    | 对给定 SQL 显示执行计划（EXPLAIN）。 |
 | **spawn_subagent**  | 生成专注子代理来处理特定子任务（如多表分析）。 |
 
-当前默认安全模式为 **只读**：不支持 INSERT/UPDATE/DELETE 或 DDL。
+### 写入工具
+
+当 `safety.read_only` 设为 `false` 时可用。写入操作会经过完整安全流水线（策略检查 → SQL 校验 → 试跑 → 可选人工确认 → 事务包裹 → 审计日志）。
+
+| 工具                 | 说明 |
+|---------------------|------|
+| **data_modify**     | 执行 INSERT、UPDATE 或 DELETE，带安全检查与影响评估。 |
+| **ddl_execute**     | 执行 DDL 语句（CREATE、ALTER、DROP、TRUNCATE）。DROP 操作需确认。 |
+| **transaction**     | 显式事务控制：BEGIN、COMMIT 或 ROLLBACK，用于多语句原子操作。 |
+
+默认安全模式为 **只读**。将 `safety.read_only` 设为 `false` 以启用写操作。
 
 ---
 
@@ -325,12 +338,14 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 
 **内置技能：**
 
-| 技能 | 说明 |
-|------|------|
-| **Data Analysis（数据分析）** | 查看结构、执行 SELECT、汇总数据并报告规律或异常。 |
-| **Schema Documenter（文档生成）** | 为数据库 schema 生成全面文档，含关系映射。 |
-| **Query Translator（查询翻译）** | 在不同数据库方言间翻译 SQL（MySQL、PostgreSQL、SQLite）。 |
-| **Data Detective（数据侦探）** | 检测数据质量问题、异常、重复记录和引用完整性问题。 |
+| 技能 | 类型 | 说明 |
+|------|------|------|
+| **Data Analysis（数据分析）** | 只读 | 查看结构、执行 SELECT、汇总数据并报告规律或异常。 |
+| **Schema Documenter（文档生成）** | 只读 | 为数据库 schema 生成全面文档，含关系映射。 |
+| **Query Translator（查询翻译）** | 只读 | 在不同数据库方言间翻译 SQL（MySQL、PostgreSQL、SQLite）。 |
+| **Data Detective（数据侦探）** | 只读 | 检测数据质量问题、异常、重复记录和引用完整性问题。 |
+| **AI Column（AI 列）** | 写入 | 用 LLM 生成列值——摘要、情感分析、翻译、评分。 |
+| **Test Data Factory（测试数据工厂）** | 写入 | 生成语义合理的测试数据，自动满足外键约束和业务规则。 |
 
 自定义技能可将 `SKILL.md` 放到对应技能目录，格式与路线图见架构与技能文档。
 
@@ -370,4 +385,5 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 
 - [架构与实现计划](PLAN_ARCHITECTURE_CN.md)（[英文](PLAN_ARCHITECTURE.md)）  
 - [技能路线图](SKILLS_ROADMAP_CN.md)（[英文](SKILLS_ROADMAP.md)）  
-- [Phase 1 计划归档](PLAN_PHASE1_ARCHIVE.md)
+- [Phase 1 计划归档](PLAN_PHASE1_ARCHIVE.md)  
+- [Phase 2 计划归档](PLAN_PHASE2_ARCHIVE.md)

@@ -108,7 +108,7 @@ class DatabaseAdapter(ABC):
 class SQLAdapter(DatabaseAdapter):
     """Specialized adapter for SQL (relational) databases.
 
-    Adds schema introspection methods on top of the base adapter.
+    Adds schema introspection and transaction methods on top of the base adapter.
     """
 
     @abstractmethod
@@ -126,3 +126,15 @@ class SQLAdapter(DatabaseAdapter):
     @abstractmethod
     async def explain(self, sql: str) -> QueryResult:
         """Run EXPLAIN on a SQL statement and return the plan."""
+
+    async def begin_transaction(self) -> None:
+        """Begin an explicit transaction."""
+        await self.execute("BEGIN")
+
+    async def commit(self) -> None:
+        """Commit the current transaction."""
+        await self.execute("COMMIT")
+
+    async def rollback(self) -> None:
+        """Roll back the current transaction."""
+        await self.execute("ROLLBACK")

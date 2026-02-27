@@ -191,3 +191,18 @@ class PostgreSQLAdapter(SQLAdapter):
         columns = ["QUERY PLAN"]
         rows = [tuple(r) for r in records]
         return QueryResult(columns=columns, rows=rows)
+
+    async def begin_transaction(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        await self._conn.execute("BEGIN")
+
+    async def commit(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        await self._conn.execute("COMMIT")
+
+    async def rollback(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        await self._conn.execute("ROLLBACK")

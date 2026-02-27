@@ -1,6 +1,6 @@
 # QueryClaw User Manual
 
-**Version 0.2.x** — Database agent with safety layer, PostgreSQL support, and subagent system
+**Version 0.3.x** — Database agent with write operations, safety layer, PostgreSQL support, and subagent system
 
 This manual describes how to install, configure, and use QueryClaw to chat with your database in natural language.
 
@@ -25,13 +25,14 @@ This manual describes how to install, configure, and use QueryClaw to chat with 
 
 QueryClaw is an **AI-native database agent** that lets you ask questions about your database in plain language. The agent uses a **ReACT loop** (Reasoning + Acting): it inspects the schema, runs read-only SQL, and explains execution plans — all through natural language.
 
-**Current version (0.2.x)** supports:
+**Current version (0.3.x)** supports:
 
 - **Databases:** SQLite, MySQL, PostgreSQL  
 - **LLM providers:** OpenRouter, Anthropic, OpenAI, DeepSeek, Gemini, DashScope, Moonshot (via [LiteLLM](https://github.com/BerriAI/litellm))  
-- **Tools:** Schema inspection, read-only query execution, EXPLAIN plan, subagent spawning  
-- **Safety layer:** Policy engine, SQL AST validator, dry-run engine, audit logger  
-- **Skills:** Data Analysis, Schema Documenter, Query Translator, Data Detective  
+- **Read tools:** Schema inspection, read-only query execution, EXPLAIN plan, subagent spawning  
+- **Write tools:** `data_modify` (INSERT/UPDATE/DELETE), `ddl_execute` (CREATE/ALTER/DROP), `transaction` (BEGIN/COMMIT/ROLLBACK)  
+- **Safety layer:** Policy engine, SQL AST validator, dry-run engine, human confirmation, audit logger  
+- **Skills:** Data Analysis, Schema Documenter, Query Translator, Data Detective, AI Column, Test Data Factory  
 - **CLI:** `onboard` (create config), `chat` (interactive or single-turn)
 
 ---
@@ -65,7 +66,7 @@ pip install queryclaw[all]
 To install a specific version:
 
 ```bash
-pip install queryclaw==0.2.0
+pip install queryclaw==0.3.0
 ```
 
 Verify:
@@ -297,6 +298,8 @@ Output is rendered as **Markdown** by default; use `--no-markdown` for plain tex
 
 The agent uses these tools automatically during the ReACT loop. You do not call them directly.
 
+### Read Tools
+
 | Tool                | Description |
 |---------------------|-------------|
 | **schema_inspect**  | List tables; describe columns, indexes, and foreign keys for a table. |
@@ -304,7 +307,17 @@ The agent uses these tools automatically during the ReACT loop. You do not call 
 | **explain_plan**    | Show the execution plan (EXPLAIN) for a given SQL query. |
 | **spawn_subagent**  | Spawn a focused subagent to handle a specific subtask (e.g. multi-table analysis). |
 
-The current default safety mode is **read-only**: no INSERT/UPDATE/DELETE or DDL.
+### Write Tools
+
+Write tools are available when `safety.read_only` is set to `false`. They go through the full safety pipeline (policy check → SQL validation → dry-run → optional human confirmation → transaction wrapping → audit logging).
+
+| Tool                | Description |
+|---------------------|-------------|
+| **data_modify**     | Execute INSERT, UPDATE, or DELETE with safety checks and impact estimation. |
+| **ddl_execute**     | Execute DDL statements (CREATE, ALTER, DROP, TRUNCATE). DROP operations require confirmation. |
+| **transaction**     | Explicit transaction control: BEGIN, COMMIT, or ROLLBACK for multi-statement atomic operations. |
+
+The default safety mode is **read-only**. Set `safety.read_only` to `false` to enable write operations.
 
 ---
 
@@ -314,12 +327,14 @@ Skills guide the agent’s behavior for certain kinds of tasks. They are loaded 
 
 **Built-in skills:**
 
-| Skill | Description |
-|-------|-------------|
-| **Data Analysis** | Explore schema, run SELECTs, summarize data, report patterns or anomalies. |
-| **Schema Documenter** | Generate comprehensive documentation for database schema with relationship mapping. |
-| **Query Translator** | Translate SQL queries between different database dialects (MySQL, PostgreSQL, SQLite). |
-| **Data Detective** | Detect data quality issues, anomalies, duplicate records, and referential integrity problems. |
+| Skill | Type | Description |
+|-------|------|-------------|
+| **Data Analysis** | Read | Explore schema, run SELECTs, summarize data, report patterns or anomalies. |
+| **Schema Documenter** | Read | Generate comprehensive documentation for database schema with relationship mapping. |
+| **Query Translator** | Read | Translate SQL queries between different database dialects (MySQL, PostgreSQL, SQLite). |
+| **Data Detective** | Read | Detect data quality issues, anomalies, duplicate records, and referential integrity problems. |
+| **AI Column** | Write | Generate column values using LLM — summaries, sentiment, translations, scores. |
+| **Test Data Factory** | Write | Generate semantically realistic test data respecting FK constraints and business rules. |
 
 Custom skills can be added by placing `SKILL.md` in the appropriate skills directory; see the architecture and skills roadmap docs for format and roadmap.
 
@@ -359,4 +374,5 @@ Custom skills can be added by placing `SKILL.md` in the appropriate skills direc
 
 - [Architecture & Implementation Plan](PLAN_ARCHITECTURE.md)  
 - [Skills Roadmap](SKILLS_ROADMAP.md)  
-- [Phase 1 Plan (Archive)](PLAN_PHASE1_ARCHIVE.md)
+- [Phase 1 Plan (Archive)](PLAN_PHASE1_ARCHIVE.md)  
+- [Phase 2 Plan (Archive)](PLAN_PHASE2_ARCHIVE.md)

@@ -7,17 +7,26 @@ from typing import Any
 
 from loguru import logger
 
+from typing import Callable, Awaitable
+
 from queryclaw.agent.context import ContextBuilder
 from queryclaw.agent.memory import MemoryStore
 from queryclaw.agent.skills import SkillsLoader
 from queryclaw.agent.subagent import SubAgentSpawner, SpawnSubAgentTool
 from queryclaw.db.base import SQLAdapter
 from queryclaw.providers.base import LLMProvider
+from queryclaw.safety.audit import AuditLogger
 from queryclaw.safety.policy import SafetyPolicy
+from queryclaw.safety.validator import QueryValidator
 from queryclaw.tools.registry import ToolRegistry
 from queryclaw.tools.schema import SchemaInspectTool
 from queryclaw.tools.query import QueryExecuteTool
 from queryclaw.tools.explain import ExplainPlanTool
+from queryclaw.tools.modify import DataModifyTool
+from queryclaw.tools.ddl import DDLExecuteTool
+from queryclaw.tools.transaction import TransactionTool
+
+ConfirmationCallback = Callable[[str, str], Awaitable[bool]]
 
 
 class AgentLoop:
@@ -42,6 +51,7 @@ class AgentLoop:
         max_query_rows: int = 100,
         safety_policy: SafetyPolicy | None = None,
         enable_subagent: bool = True,
+        confirmation_callback: ConfirmationCallback | None = None,
     ) -> None:
         self.provider = provider
         self.db = db
@@ -50,6 +60,7 @@ class AgentLoop:
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.safety_policy = safety_policy or SafetyPolicy()
+        self.confirmation_callback = confirmation_callback
 
         self.tools = ToolRegistry()
         self.skills = SkillsLoader()
@@ -66,6 +77,29 @@ class AgentLoop:
         self.tools.register(ExplainPlanTool(self.db))
         if enable_subagent:
             self.tools.register(SpawnSubAgentTool(self.subagent_spawner))
+
+        if self.safety_policy.allows_write():
+            validator = QueryValidator(blocked_patterns=self.safety_policy.blocked_patterns)
+            audit = AuditLogger(self.db)
+            self.tools.register(DataModifyTool(
+                db=self.db,
+                policy=self.safety_policy,
+                validator=validator,
+                audit=audit,
+                confirmation_callback=self.confirmation_callback,
+            ))
+            self.tools.register(DDLExecuteTool(
+                db=self.db,
+                policy=self.safety_policy,
+                validator=validator,
+                audit=audit,
+                confirmation_callback=self.confirmation_callback,
+                on_schema_change=self.context.invalidate_schema_cache,
+            ))
+            self.tools.register(TransactionTool(
+                db=self.db,
+                policy=self.safety_policy,
+            ))
 
     async def chat(self, user_message: str) -> str:
         """Process a user message and return the agent's response.

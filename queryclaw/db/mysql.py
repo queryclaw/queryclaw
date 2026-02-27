@@ -155,3 +155,20 @@ class MySQLAdapter(SQLAdapter):
         if not self._conn:
             raise RuntimeError("Not connected")
         return await self.execute(f"EXPLAIN {sql}")
+
+    async def begin_transaction(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        await self._conn.begin()
+
+    async def commit(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        async with self._conn.cursor() as cur:
+            await cur.execute("COMMIT")
+
+    async def rollback(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        async with self._conn.cursor() as cur:
+            await cur.execute("ROLLBACK")

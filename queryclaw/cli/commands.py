@@ -21,6 +21,7 @@ from queryclaw.config.loader import get_config_path, load_config, save_config
 from queryclaw.config.schema import Config
 from queryclaw.db.registry import AdapterRegistry
 from queryclaw.providers.litellm_provider import LiteLLMProvider
+from queryclaw.safety.policy import SafetyPolicy
 
 app = typer.Typer(
     name="queryclaw",
@@ -127,10 +128,31 @@ async def _read_interactive_input(prompt_session: PromptSession) -> str:
         return await prompt_session.prompt_async(HTML("<b fg='ansiblue'>You:</b> "))
 
 
+async def _confirm_operation(sql: str, message: str) -> bool:
+    """Prompt user for confirmation of destructive operations."""
+    console.print()
+    console.print("[yellow]--- Confirmation Required ---[/yellow]")
+    console.print(message)
+    console.print()
+    try:
+        answer = input("Proceed? [y/N] ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        return False
+    return answer in ("y", "yes")
+
+
 async def _run_chat(config: Config, message: str | None, render_markdown: bool) -> int:
     provider = _make_provider(config)
     adapter = await AdapterRegistry.create_and_connect(**config.database.model_dump())
     try:
+        safety = SafetyPolicy(
+            read_only=config.safety.read_only,
+            max_affected_rows=config.safety.max_affected_rows,
+            require_confirmation=config.safety.require_confirmation,
+            allowed_tables=config.safety.allowed_tables,
+            blocked_patterns=config.safety.blocked_patterns,
+            audit_enabled=config.safety.audit_enabled,
+        )
         agent = AgentLoop(
             provider=provider,
             db=adapter,
@@ -138,6 +160,8 @@ async def _run_chat(config: Config, message: str | None, render_markdown: bool) 
             max_iterations=config.agent.max_iterations,
             temperature=config.agent.temperature,
             max_tokens=config.agent.max_tokens,
+            safety_policy=safety,
+            confirmation_callback=_confirm_operation,
         )
 
         if message:

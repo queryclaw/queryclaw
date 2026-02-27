@@ -137,18 +137,16 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 - 配置系统
 - 基础技能加载
 
-### 阶段二：写操作与安全 *（进行中）*
+### 阶段二：写操作与安全 *（已完成）*
 
-- **已完成（批次 A+B）：**
-  - PostgreSQL 适配器（asyncpg）
-  - 安全层：策略引擎、SQL AST 校验器、试跑引擎、审计日志
-  - 子代理系统：`spawn_subagent` 工具，用于委派任务
-  - 只读技能：Schema 文档生成、查询翻译器、数据侦探
-  - 配置系统新增 `SafetyConfig`
-- **待完成（批次 C+D）：**
-  - 写入工具：`data_modify`、`ddl_execute`、`transaction`
-  - 破坏性操作人机确认流程
-  - 写操作技能：AI 列、测试数据工厂
+- PostgreSQL 适配器（asyncpg）
+- 安全层：策略引擎、SQL AST 校验器、试跑引擎、审计日志
+- 子代理系统：`spawn_subagent` 工具，用于委派任务
+- 写入工具：`data_modify`、`ddl_execute`、`transaction`
+- 破坏性操作人机确认流程
+- 只读技能：Schema 文档生成、查询翻译器、数据侦探
+- 写操作技能：AI 列、测试数据工厂
+- 配置系统新增 `SafetyConfig`
 
 ### 阶段三：高级技能与记忆
 

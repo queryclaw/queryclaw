@@ -129,3 +129,24 @@ class SQLiteAdapter(SQLAdapter):
         if not self._conn:
             raise RuntimeError("Not connected")
         return await self.execute(f"EXPLAIN QUERY PLAN {sql}")
+
+    async def begin_transaction(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        # aiosqlite uses deferred transactions by default;
+        # commit any implicit transaction first, then start a new one.
+        try:
+            await self._conn.commit()
+        except Exception:
+            pass
+        await self._conn.execute("BEGIN")
+
+    async def commit(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        await self._conn.commit()
+
+    async def rollback(self) -> None:
+        if not self._conn:
+            raise RuntimeError("Not connected")
+        await self._conn.rollback()

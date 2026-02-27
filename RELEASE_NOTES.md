@@ -4,6 +4,20 @@
 
 ---
 
+## 0.4.4 (2026-02-27)
+
+### Fixes
+
+- **MySQL/OceanBase UTF-8 decode error**: Improved handling of `'utf-8' codec can't decode byte ... unexpected end of data`. On `UnicodeDecodeError`, connection is closed, a short delay is applied before reconnect, and retry uses a fresh connection.
+- **MySQL long SQL**: Set `max_allowed_packet=67108864` (64MB) on connect to support bulk UPDATE with large Chinese text.
+- **MySQL connection cleanup**: Added `_close_conn()` for consistent connection teardown on errors; prevents reusing corrupted connections.
+
+### Changes
+
+- USER_MANUAL, USER_MANUAL_CN: Updated version references from 0.3.x to 0.4.x.
+
+---
+
 ## 0.4.3 (2026-02-27)
 
 ### Features

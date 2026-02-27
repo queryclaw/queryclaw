@@ -4,6 +4,20 @@
 
 ---
 
+## 0.4.4 (2026-02-27)
+
+### 修复
+
+- **MySQL/OceanBase UTF-8 解码错误**：改进对 `'utf-8' codec can't decode byte ... unexpected end of data` 的处理。发生 `UnicodeDecodeError` 时关闭连接、短暂延迟后重连，重试使用新连接。
+- **MySQL 长 SQL**：连接时设置 `max_allowed_packet=67108864`（64MB），支持含大量中文的 bulk UPDATE。
+- **MySQL 连接清理**：新增 `_close_conn()`，错误时统一关闭连接，避免复用损坏连接。
+
+### 变更
+
+- USER_MANUAL、USER_MANUAL_CN：版本引用从 0.3.x 更新为 0.4.x。
+
+---
+
 ## 0.4.3 (2026-02-27)
 
 ### 功能

@@ -1,6 +1,6 @@
 # QueryClaw User Manual
 
-**Version 0.3.x** — Database agent with write operations, safety layer, PostgreSQL support, subagent system, and multi-channel output (Feishu, DingTalk)
+**Version 0.4.x** — Database agent with write operations, safety layer, PostgreSQL support, subagent system, and multi-channel output (Feishu, DingTalk)
 
 This manual describes how to install, configure, and use QueryClaw to chat with your database in natural language.
 
@@ -25,7 +25,7 @@ This manual describes how to install, configure, and use QueryClaw to chat with 
 
 QueryClaw is an **AI-native database agent** that lets you ask questions about your database in plain language. The agent uses a **ReACT loop** (Reasoning + Acting): it inspects the schema, runs read-only SQL, and explains execution plans — all through natural language.
 
-**Current version (0.3.x)** supports:
+**Current version (0.4.x)** supports:
 
 - **Databases:** SQLite, MySQL, PostgreSQL  
 - **LLM providers:** OpenRouter, Anthropic, OpenAI, DeepSeek, Gemini, DashScope, Moonshot (via [LiteLLM](https://github.com/BerriAI/litellm))  

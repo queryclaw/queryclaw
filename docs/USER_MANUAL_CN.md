@@ -1,6 +1,6 @@
 # QueryClaw 用户手册
 
-**版本 0.3.x** — 带写操作、安全层、PostgreSQL 支持、子代理系统和多通道输出（飞书、钉钉）的数据库 Agent
+**版本 0.4.x** — 带写操作、安全层、PostgreSQL 支持、子代理系统和多通道输出（飞书、钉钉）的数据库 Agent
 
 本文介绍如何安装、配置和使用 QueryClaw，通过自然语言与数据库对话。
 
@@ -25,7 +25,7 @@
 
 QueryClaw 是一个 **AI 原生数据库 Agent**，可以用自然语言向数据库提问。Agent 使用 **ReACT 循环**（推理 + 行动）：查看表结构、执行只读 SQL、查看执行计划，均通过自然语言完成。
 
-**当前版本（0.3.x）** 支持：
+**当前版本（0.4.x）** 支持：
 
 - **数据库：** SQLite、MySQL、PostgreSQL  
 - **LLM 提供方：** OpenRouter、Anthropic、OpenAI、DeepSeek、Gemini、DashScope、Moonshot（通过 [LiteLLM](https://github.com/BerriAI/litellm)）  
@@ -278,7 +278,7 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
    - `im:message` 相关：接收消息、发送消息、群组内发送消息。
    - `im:message.p2p_chat`：接收与发送私聊消息（私聊必需）。
    - `im:message.group_at_msg`：接收群聊中 @ 机器人的消息。
-5. **事件订阅**：在「事件与回调」中，选择 **「使用长连接接收事件」**，在「添加事件」中勾选 `im.message.receive_v1`（接收消息），然后保存。
+5. **事件订阅**：在「事件与回调」中，选择 **「使用长连接接收事件」** 并保存。若页面有「添加事件」选项，勾选 **「接收消息」**（或「接收消息 v2.0」）后保存。
    - 需先运行 `queryclaw serve` 或 `queryclaw feishu-test` 建立连接后，再在后台保存，否则保存可能失败。
 6. **发布应用**：在「版本管理与发布」中创建版本并发布。
 7. **添加机器人**：
@@ -299,7 +299,7 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 **serve 端收不到消息？** 若发消息后终端无 `[Feishu] Received event` 日志，说明事件未到达我们的 handler，可按以下步骤排查：
 
 1. **确认 WebSocket 已连接**：启动 `queryclaw serve` 后，终端应出现 `connected to wss://...`（来自 lark-oapi）。若没有，检查 `app_id`、`app_secret` 是否正确、网络是否可达飞书。
-2. **在连接在线时保存事件订阅**：必须在 `queryclaw serve` 已启动且连接成功后，再去开放平台「事件与回调」→ 选择「使用长连接接收事件」→ **添加事件** 中勾选 `im.message.receive_v1`（接收消息）→ 保存。若在连接建立前保存，可能无法收到消息。
+2. **在连接在线时保存事件订阅**：必须在 `queryclaw serve` 已启动且连接成功后，再去开放平台「事件与回调」→ 选择「使用长连接接收事件」→ 若有「添加事件」，勾选「接收消息」→ 保存。若在连接建立前保存，可能无法收到消息。
 3. **验证连接**：可运行 `queryclaw feishu-test`（需先配置好 `config.json`）做最小连接测试；发一条消息后若看到 `[Feishu] Received event`，说明连接正常。
 
 **示例：**

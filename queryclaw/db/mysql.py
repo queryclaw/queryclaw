@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import Any
 
@@ -51,6 +52,12 @@ class MySQLAdapter(SQLAdapter):
             use_unicode=True,
             init_command="SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
         )
+        # Increase packet size for long SQL (e.g. bulk UPDATE with Chinese text)
+        try:
+            async with self._conn.cursor() as cur:
+                await cur.execute("SET SESSION max_allowed_packet=67108864")
+        except Exception:
+            pass
 
     async def _ensure_connected(self) -> None:
         """Reconnect if the connection is lost."""
@@ -65,19 +72,21 @@ class MySQLAdapter(SQLAdapter):
         if not self._connect_kwargs:
             raise RuntimeError("Not connected and no stored connection parameters")
 
-        try:
-            if self._conn:
-                self._conn.close()
-        except Exception:
-            pass
-        self._conn = None
+        self._close_conn()
 
         logger.info("Reconnecting to MySQL...")
         await self.connect(**self._connect_kwargs)
 
     async def close(self) -> None:
+        self._close_conn()
+
+    def _close_conn(self) -> None:
+        """Close connection and clear reference."""
         if self._conn:
-            self._conn.close()
+            try:
+                self._conn.close()
+            except Exception:
+                pass
             self._conn = None
 
     async def execute(self, sql: str, params: tuple | None = None) -> QueryResult:
@@ -88,10 +97,18 @@ class MySQLAdapter(SQLAdapter):
                 return await self._execute_once(sql, params)
             except RuntimeError:
                 raise
+            except UnicodeDecodeError as e:
+                last_error = e
+                logger.warning(
+                    "MySQL execute failed (attempt {}/{}): UTF-8 decode error - connection may be corrupted: {}",
+                    attempt + 1, _MAX_RECONNECT_ATTEMPTS, e,
+                )
+                self._close_conn()
+                await asyncio.sleep(0.5)  # Allow server to release the broken connection
             except Exception as e:
                 last_error = e
                 logger.warning("MySQL execute failed (attempt {}/{}): {}", attempt + 1, _MAX_RECONNECT_ATTEMPTS, e)
-                self._conn = None
+                self._close_conn()
         raise last_error  # type: ignore[misc]
 
     async def _execute_once(self, sql: str, params: tuple | None = None) -> QueryResult:

@@ -4,6 +4,16 @@
 
 ---
 
+## 0.4.10 (2026-02-27)
+
+### Changes
+
+- **USER_MANUAL simplification**: Moved detailed channel setup (Feishu, DingTalk) and Skills content to separate docs. Added FEISHU_SETUP, DINGTALK_SETUP; Skills section now links to SKILLS_ROADMAP.
+- **Channel confirmation note**: Updated serve mode description — destructive ops now prompt for confirmation (reply 确认/取消) instead of being rejected.
+- **See Also**: Added links to Feishu and DingTalk setup guides.
+
+---
+
 ## 0.4.9 (2026-02-27)
 
 ### Fixes

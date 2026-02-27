@@ -267,41 +267,12 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 | `client_secret`  | string | AppSecret。 |
 | `allow_from`     | list   | 允许的 staff_id 列表；空表示全部允许。 |
 
-**飞书通道对接指南：**
+**通道对接指南：**
 
-飞书通道使用 **WebSocket 长连接**，无需公网 IP 或域名，只需本地能访问飞书 API。
+- **飞书**：详见 [FEISHU_SETUP_CN.md](FEISHU_SETUP_CN.md)
+- **钉钉**：详见 [DINGTALK_SETUP_CN.md](DINGTALK_SETUP_CN.md)
 
-1. **创建应用**：在 [飞书开放平台](https://open.feishu.cn/app) 创建企业自建应用。
-2. **获取凭证**：在「凭证与基础信息」中获取 `App ID` 和 `App Secret`。
-3. **启用机器人**：在「功能」→「机器人」中启用机器人能力。
-4. **配置权限**：在「权限管理」中增加：
-   - `im:message` 相关：接收消息、发送消息、群组内发送消息。
-   - `im:message.p2p_chat`：接收与发送私聊消息（私聊必需）。
-   - `im:message.group_at_msg`：接收群聊中 @ 机器人的消息。
-5. **事件订阅**：在「事件与回调」中，选择 **「使用长连接接收事件」** 并保存。若页面有「添加事件」选项，勾选 **「接收消息」**（或「接收消息 v2.0」）后保存。
-   - 需先运行 `queryclaw serve` 建立连接后，再在后台保存，否则保存可能失败。
-6. **发布应用**：在「版本管理与发布」中创建版本并发布。
-7. **添加机器人**：
-   - **群聊**：打开群聊 → 右上角「⋯」→「群机器人」→「添加机器人」→ 搜索你的应用名称并添加。添加后，在群里 @ 机器人即可提问。
-   - **私聊**：在飞书客户端顶部搜索框输入应用名称，选择该应用并发起对话。
-8. **配置 QueryClaw**：在 `config.json` 的 `channels.feishu` 中填入 `app_id`、`app_secret`，设置 `enabled: true`。
-9. **启动服务**：`pip install queryclaw[feishu]` 后执行 `queryclaw serve`。
-
-**私聊能搜到应用但无法对话？** 常见原因与排查：
-
-| 原因 | 排查与处理 |
-|------|------------|
-| **应用可用范围** | 发布版本时「可用范围」需包含当前用户。在开放平台「版本管理与发布」→ 创建新版本 → 将可用范围设为「全部成员」或加入你的组织/用户组，重新发布。 |
-| **事件订阅未生效** | 「事件与回调」必须选择「使用长连接接收事件」并保存成功。需先运行 `queryclaw serve` 建立连接，再在后台保存。保存失败时，检查 serve 是否在运行、网络是否可达飞书。 |
-| **serve 未运行** | 确保 `queryclaw serve` 持续运行；退出后机器人无法收消息、无法回复。 |
-| **权限未开通** | 在「权限管理」中确认 `im:message`、`im:message.p2p_chat` 等已申请且状态为「已开通」。新加权限后需重新发布版本。 |
-
-**serve 端收不到消息？** 若发消息后终端无 `[Feishu] Received event` 日志，说明事件未到达我们的 handler，可按以下步骤排查：
-
-1. **确认 WebSocket 已连接**：启动 `queryclaw serve` 后，终端应出现 `connected to wss://...`（来自 lark-oapi）。若没有，检查 `app_id`、`app_secret` 是否正确、网络是否可达飞书。
-2. **在连接在线时保存事件订阅**：必须在 `queryclaw serve` 已启动且连接成功后，再去开放平台「事件与回调」→ 选择「使用长连接接收事件」→ 若有「添加事件」，勾选「接收消息」→ 保存。若在连接建立前保存，可能无法收到消息。
-
-**示例：**
+**配置示例：**
 
 ```json
 "channels": {
@@ -397,7 +368,7 @@ queryclaw serve [--config PATH]
 - 在配置中启用至少一个通道（见 [通道 (channels)](#通道-channels)）
 - 安装通道依赖：`pip install queryclaw[feishu]` 和/或 `pip install queryclaw[dingtalk]`
 
-**注意：** 通道模式下，当 `safety.require_confirmation` 为 true 时，破坏性操作（INSERT/UPDATE/DELETE/DDL）会被**拒绝**，因为无法进行交互式确认。
+**注意：** 通道模式下，当 `safety.require_confirmation` 为 true 时，破坏性操作会向用户发起确认提示（回复「确认」或「取消」）。
 
 ---
 
@@ -441,20 +412,9 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 
 ## 技能
 
-技能用于在特定类型任务上引导 Agent 行为，通过 `SKILL.md` 文件加载（如安装包内的 `queryclaw/skills/` 目录）。
+技能用于在特定类型任务上引导 Agent 行为。Agent 通过 `read_skill` 工具按需加载 `SKILL.md` 工作流。
 
-**内置技能：**
-
-| 技能 | 类型 | 说明 |
-|------|------|------|
-| **Data Analysis（数据分析）** | 只读 | 查看结构、执行 SELECT、汇总数据并报告规律或异常。 |
-| **Schema Documenter（文档生成）** | 只读 | 为数据库 schema 生成全面文档，含关系映射。 |
-| **Query Translator（查询翻译）** | 只读 | 在不同数据库方言间翻译 SQL（MySQL、PostgreSQL、SQLite）。 |
-| **Data Detective（数据侦探）** | 只读 | 检测数据质量问题、异常、重复记录和引用完整性问题。 |
-| **AI Column（AI 列）** | 写入 | 用 LLM 生成列值——摘要、情感分析、翻译、评分。 |
-| **Test Data Factory（测试数据工厂）** | 写入 | 生成语义合理的测试数据，自动满足外键约束和业务规则。 |
-
-自定义技能可将 `SKILL.md` 放到对应技能目录，格式与路线图见架构与技能文档。
+**内置技能：** data_analysis、test_data_factory、ai_column、data_detective、query_translator、schema_documenter。详见 [技能路线图](SKILLS_ROADMAP_CN.md)。
 
 ---
 
@@ -490,7 +450,7 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 
 ## 相关文档
 
+- [飞书通道对接](FEISHU_SETUP_CN.md) | [钉钉通道对接](DINGTALK_SETUP_CN.md)  
 - [架构与实现计划](PLAN_ARCHITECTURE_CN.md)（[英文](PLAN_ARCHITECTURE.md)）  
 - [技能路线图](SKILLS_ROADMAP_CN.md)（[英文](SKILLS_ROADMAP.md)）  
-- [Phase 1 计划归档](PLAN_PHASE1_ARCHIVE.md)  
-- [Phase 2 计划归档](PLAN_PHASE2_ARCHIVE.md)
+- [Phase 1 计划归档](PLAN_PHASE1_ARCHIVE.md) | [Phase 2 计划归档](PLAN_PHASE2_ARCHIVE.md)

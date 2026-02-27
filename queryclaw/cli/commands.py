@@ -280,6 +280,78 @@ async def _run_serve(config: Config) -> None:
 
 
 @app.command()
+def feishu_test(
+    config_path: Path | None = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Custom config path (default: ~/.queryclaw/config.json).",
+    ),
+) -> None:
+    """Test Feishu WebSocket connection. Send a message to the bot; if you see [Feishu] Received event, connection works."""
+    try:
+        import lark_oapi as lark
+    except ImportError:
+        console.print("[red]Error:[/red] lark-oapi not installed. Run: pip install queryclaw[feishu]")
+        raise typer.Exit(code=1) from None
+
+    config = load_config(config_path)
+    fc = config.channels.feishu
+    if not fc or not fc.enabled or not fc.app_id or not fc.app_secret:
+        console.print("[red]Error:[/red] Feishu not configured. Set channels.feishu in config with app_id, app_secret, enabled: true.")
+        raise typer.Exit(code=1) from None
+
+    received = []
+
+    def on_message(data):
+        received.append(1)
+        from loguru import logger
+        logger.info("[Feishu] Received event (sync handler)")
+
+    import asyncio
+    import threading
+    import time
+
+    event_handler = (
+        lark.EventDispatcherHandler.builder("", "")
+        .register_p2_im_message_receive_v1(on_message)
+        .build()
+    )
+    ws_client = lark.ws.Client(
+        fc.app_id,
+        fc.app_secret,
+        event_handler=event_handler,
+        log_level=lark.LogLevel.INFO,
+    )
+
+    def run_ws():
+        ws_loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(ws_loop)
+        try:
+            import lark_oapi.ws.client as ws_client_mod
+            ws_client_mod.loop = ws_loop
+        except Exception:
+            pass
+        try:
+            ws_client.start()
+        except Exception as e:
+            from loguru import logger
+            logger.warning("Feishu WebSocket error: {}", e)
+
+    thread = threading.Thread(target=run_ws, daemon=True)
+    thread.start()
+
+    console.print("[green]Feishu WebSocket test started.[/green]")
+    console.print("Send a message to your bot in Feishu. If connection works, you will see [Feishu] Received event.")
+    console.print("Press Ctrl+C to exit.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+
+
+@app.command()
 def serve(
     config_path: Path | None = typer.Option(
         None,

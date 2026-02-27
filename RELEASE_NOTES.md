@@ -4,6 +4,19 @@
 
 ---
 
+## 0.4.3 (2026-02-27)
+
+### Features
+
+- **`queryclaw feishu-test`**: New CLI command to test Feishu WebSocket connection without running the full serve stack.
+
+### Changes
+
+- USER_MANUAL_CN: Added "serve 收不到消息" troubleshooting (WebSocket connection check, event subscription save order, im.message.receive_v1).
+- USER_MANUAL_CN: Clarified event subscription steps: add `im.message.receive_v1` in "添加事件" and save while connection is live.
+
+---
+
 ## 0.4.2 (2026-02-27)
 
 ### Changes

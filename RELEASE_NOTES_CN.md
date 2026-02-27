@@ -4,6 +4,19 @@
 
 ---
 
+## 0.4.3 (2026-02-27)
+
+### 功能
+
+- **`queryclaw feishu-test`**：新增 CLI 命令，用于单独测试飞书 WebSocket 连接，无需启动完整 serve。
+
+### 变更
+
+- USER_MANUAL_CN：新增「serve 端收不到消息」排查（WebSocket 连接检查、事件订阅保存顺序、im.message.receive_v1）。
+- USER_MANUAL_CN：明确事件订阅步骤：在「添加事件」中勾选 `im.message.receive_v1`，并在连接在线时保存。
+
+---
+
 ## 0.4.2 (2026-02-27)
 
 ### 变更

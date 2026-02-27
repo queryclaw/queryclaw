@@ -215,11 +215,11 @@ Generate or fill a target column based on existing table data using LLM -- summa
 | Medium | Data Masker | Phase 3 | Security & compliance |
 | Medium | Smart Migrator | Phase 3 | Operations scenario |
 | Low | Change Impact Analyzer | Phase 3 | Advanced operations |
-| Low | Capacity Planner | Phase 4 | DBA scenario |
-| Low | Compliance Scanner | Phase 4 | Enterprise scenario |
-| Low | Permission Auditor | Phase 4 | Enterprise scenario |
-| Low | API Scaffolding | Phase 4 | Development productivity |
-| Low | Cross-DB Sync Checker | Phase 4+ | After multi-DB support |
+| Low | Capacity Planner | Phase 5 | DBA scenario |
+| Low | Compliance Scanner | Phase 5 | Enterprise scenario |
+| Low | Permission Auditor | Phase 5 | Enterprise scenario |
+| Low | API Scaffolding | Phase 5 | Development productivity |
+| Low | Cross-DB Sync Checker | Phase 5 | After multi-DB support |
 
 ---
 

@@ -162,7 +162,7 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 - 可选依赖：`queryclaw[feishu]`、`queryclaw[dingtalk]`
 - 通道模式下，当 `require_confirmation=True` 时拒绝破坏性操作
 
-### 阶段四+：生态集成
+### 阶段五：生态集成
 
 - MCP 服务模式（对外暴露为其他 Agent 的工具）
 - 更多通道（Telegram、Slack 等）
@@ -170,7 +170,7 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 - Web UI
 - 自定义工具与适配器插件体系
 
-### 向量与 AI 原生数据库（阶段四+）
+### 阶段五+：向量与 AI 原生数据库
 
 与向量数据库、AI 原生数据库结合，可带来这些新亮点：
 

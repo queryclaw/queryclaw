@@ -14,8 +14,9 @@ Modeled after [nanobot](nanobot/nanobot/), adapted for database domain:
 
 ```mermaid
 graph TB
-    subgraph cli [CLI Layer]
+    subgraph cli [CLI / Channel Layer]
         UserCLI["CLI (typer + prompt_toolkit)"]
+        Channels["Channels (Feishu, DingTalk)"]
     end
 
     subgraph core [Agent Core]
@@ -56,6 +57,7 @@ graph TB
     end
 
     UserCLI --> AgentLoop
+    Channels --> AgentLoop
     AgentLoop --> Context
     AgentLoop --> Skills
     AgentLoop --> Memory
@@ -119,8 +121,16 @@ queryclaw/
 │   ├── config/
 │   │   ├── schema.py        # Pydantic config model
 │   │   └── loader.py        # Config file loader (~/.queryclaw/config.json)
+│   ├── bus/                 # Message bus (Phase 4)
+│   │   ├── events.py        # Event types
+│   │   └── queue.py         # In-memory event queue
+│   ├── channels/            # Output channels (Phase 4)
+│   │   ├── base.py          # BaseChannel ABC
+│   │   ├── manager.py       # ChannelManager
+│   │   ├── feishu.py        # Feishu channel
+│   │   └── dingtalk.py      # DingTalk channel
 │   ├── cli/
-│   │   └── commands.py      # typer CLI (chat, onboard, config)
+│   │   └── commands.py      # typer CLI (chat, onboard, serve)
 │   └── skills/              # Built-in skills (SKILL.md; see SKILLS_ROADMAP)
 │       ├── ai_column/
 │       ├── test_data_factory/
@@ -248,8 +258,8 @@ Skills use the SKILL.md format (same as nanobot). Each skill encodes a domain wo
 | Medium | Query Translator | 2 | Low cost, high value |
 | Medium | Index Advisor, Data Healer, Anomaly Scanner, Data Masker, Smart Migrator | 3 | Data governance, operations |
 | Low | Change Impact Analyzer | 3 | Advanced operations |
-| Low | Capacity Planner, Compliance Scanner, Permission Auditor, API Scaffolding | 4 | Enterprise / DBA |
-| Low | Cross-DB Sync Checker | 4+ | After multi-DB support |
+| Low | Capacity Planner, Compliance Scanner, Permission Auditor, API Scaffolding | 5 | Enterprise / DBA |
+| Low | Cross-DB Sync Checker | 5 | After multi-DB support |
 
 ## 5. What Can We Do With a Database Under Agent Control?
 
@@ -268,19 +278,22 @@ This is the exploratory core. Initial capabilities to implement:
 
 ## 6. Advanced Features Analysis (from nanobot)
 
-### Near-term (Phase 2-3)
+### Implemented
 
-- **A. Subagent system**: Background long-running tasks (large-scale analysis, full table scans, cross-table checks)
+- **A. Subagent system**: Background long-running tasks via `spawn_subagent` (Phase 2)
+- **E. Message bus + channels**: Feishu, DingTalk via `queryclaw serve` (Phase 4)
+- **H. Data lineage tracking**: Audit log (`_queryclaw_audit_log`) with before/after snapshots (Phase 2)
+
+### Near-term (Phase 3)
+
 - **B. Memory system**: Two-layer memory (MEMORY.md for schema knowledge, HISTORY.md for operation log)
 - **C. Cron system**: Scheduled health checks, performance monitoring, data quality audits
 - **D. Heartbeat**: Proactive database monitoring and anomaly alerts
-- **E. Message bus + channels**: Push results/alerts to Telegram, Slack, Feishu, etc.
 
-### Long-term (Phase 4+)
+### Long-term (Phase 5+)
 
 - **F. MCP server mode**: Expose queryclaw as MCP tool for other agents
 - **G. Multi-database connections**: Connect to multiple databases simultaneously
-- **H. Data lineage tracking**: Full operation audit trail
 - **I. NL-to-stored-procedures/views**: Persist common queries as DB objects
 - **J. Migration orchestration**: Generate and preview migration scripts
 - **K. Intelligent index advisor**: Analyze slow queries, suggest indexes
@@ -294,14 +307,14 @@ This is the exploratory core. Initial capabilities to implement:
 | **MySQL** | Phase 1 (primary) | `SQLAdapter` | Most common production DB |
 | **SQLite** | Phase 1 | `SQLAdapter` | Zero-config for dev/test/demo |
 | **PostgreSQL** | Phase 2-3 | `SQLAdapter` | Rich ecosystem, advanced SQL |
-| **MongoDB** | Phase 4+ | `DocumentAdapter` | Document-oriented, MQL |
-| **Redis** | Phase 4+ | `KVAdapter` | Key-Value, command-based |
+| **MongoDB** | Phase 5 | `DocumentAdapter` | Document-oriented, MQL |
+| **Redis** | Phase 5 | `KVAdapter` | Key-Value, command-based |
 | **Elasticsearch** | Future | `SearchAdapter` | Full-text search & analytics |
 | **ClickHouse** | Future | `SQLAdapter` | Columnar analytics |
 
 ---
 
-### 7.1 Vector & AI-Native Databases (Phase 4+)
+### 7.1 Vector & AI-Native Databases (Phase 5+)
 
 Combining with vector stores and AI-native databases adds distinct capabilities:
 
@@ -320,7 +333,7 @@ Combining with vector stores and AI-native databases adds distinct capabilities:
 
 ## 8. Implementation Phases (Updated)
 
-### Phase 1: MVP -- Read-Only Agent (current)
+### Phase 1: MVP -- Read-Only Agent *(completed)*
 
 - CLI with interactive chat (typer + prompt_toolkit)
 - ReACT agent loop (from nanobot pattern)
@@ -330,7 +343,7 @@ Combining with vector stores and AI-native databases adds distinct capabilities:
 - Basic config system
 - Basic skill loading
 
-### Phase 2: Write Operations + Safety + PostgreSQL
+### Phase 2: Write Operations + Safety + PostgreSQL *(completed)*
 
 - Tools: `data_modify`, `ddl_execute`, `transaction`
 - Safety layer: validator, dry-run, audit log
@@ -354,17 +367,17 @@ Combining with vector stores and AI-native databases adds distinct capabilities:
 - Destructive operations rejected in channel mode when `require_confirmation=True`
 - See [PLAN_PHASE4_CHANNELS.md](PLAN_PHASE4_CHANNELS.md) for implementation details
 
-### Phase 4+: Ecosystem Integration + More Databases
+### Phase 5: Ecosystem Integration
 
 - MCP server mode (expose as MCP tool for other agents)
 - Additional channels (Telegram, Slack, etc.)
 - MongoDB adapter
 - Multi-database simultaneous connections
-- Skills (low priority): Capacity Planner, Compliance Scanner, Permission Auditor, API Scaffolding; Cross-DB Sync Checker (Phase 4+)
+- Skills (low priority): Capacity Planner, Compliance Scanner, Permission Auditor, API Scaffolding; Cross-DB Sync Checker (Phase 5)
 - Web UI (optional)
 - Plugin system for custom tools/adapters
 
-### Phase 4+: Vector & AI-Native DB
+### Phase 5+: Vector & AI-Native DB
 
 - Vector store / vector column support (pgvector or sidecar); semantic schema search, hybrid query, vectorized memory
 - AI Column extension: generate embedding columns
@@ -372,12 +385,6 @@ Combining with vector stores and AI-native databases adds distinct capabilities:
 
 ---
 
-## Phase 1 Todos
+## Phase 1 Todos *(all completed)*
 
-- **phase1-db-adapter**: Implement DatabaseAdapter + SQLAdapter ABC + MySQL adapter + SQLite adapter (`queryclaw/db/`)
-- **phase1-providers**: Port LLM provider layer (base, registry, litellm_provider) from nanobot to `queryclaw/providers/`
-- **phase1-tools**: Implement Tool ABC + ToolRegistry + read-only tools (schema_inspect, query_execute, explain_plan)
-- **phase1-agent**: Implement ReACT AgentLoop + ContextBuilder with schema-aware system prompt
-- **phase1-config**: Config system (Pydantic schema + loader) for DB connection + LLM provider settings
-- **phase1-cli**: CLI with interactive chat mode (typer + prompt_toolkit)
-- **phase1-skills**: SkillsLoader + at least one built-in skill (e.g. data_analysis)
+See [PLAN_PHASE1_ARCHIVE.md](PLAN_PHASE1_ARCHIVE.md) for implementation details.

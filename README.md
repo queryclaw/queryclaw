@@ -162,7 +162,7 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 - Optional dependencies: `queryclaw[feishu]`, `queryclaw[dingtalk]`
 - Destructive operations rejected in channel mode when `require_confirmation=True`
 
-### Phase 4+: Ecosystem Integration
+### Phase 5: Ecosystem Integration
 
 - MCP server mode (expose as a tool for other agents)
 - Additional channels (Telegram, Slack, etc.)
@@ -170,7 +170,7 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 - Web UI
 - Plugin system for custom tools and adapters
 
-### Vector & AI-Native DB (Phase 4+)
+### Phase 5+: Vector & AI-Native DB
 
 Combining with vector stores and AI-native databases unlocks new capabilities:
 

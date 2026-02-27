@@ -14,8 +14,9 @@ openclaw 让 LLM 控制一台个人电脑；queryclaw 让 LLM 控制一个数据
 
 ```mermaid
 graph TB
-    subgraph cli [CLI 层]
+    subgraph cli [CLI / 通道层]
         UserCLI["CLI (typer + prompt_toolkit)"]
+        Channels["通道 (飞书, 钉钉)"]
     end
 
     subgraph core [Agent 核心]
@@ -56,6 +57,7 @@ graph TB
     end
 
     UserCLI --> AgentLoop
+    Channels --> AgentLoop
     AgentLoop --> Context
     AgentLoop --> Skills
     AgentLoop --> Memory
@@ -119,8 +121,16 @@ queryclaw/
 │   ├── config/
 │   │   ├── schema.py        # Pydantic 配置模型
 │   │   └── loader.py        # 配置加载 (~/.queryclaw/config.json)
+│   ├── bus/                 # 消息总线（阶段四）
+│   │   ├── events.py        # 事件类型
+│   │   └── queue.py         # 内存事件队列
+│   ├── channels/            # 输出通道（阶段四）
+│   │   ├── base.py          # BaseChannel 抽象基类
+│   │   ├── manager.py       # ChannelManager
+│   │   ├── feishu.py        # 飞书通道
+│   │   └── dingtalk.py      # 钉钉通道
 │   ├── cli/
-│   │   └── commands.py      # typer CLI (chat, onboard, config)
+│   │   └── commands.py      # typer CLI (chat, onboard, serve)
 │   └── skills/              # 内置技能 (SKILL.md；详见 SKILLS_ROADMAP)
 │       ├── ai_column/
 │       ├── test_data_factory/
@@ -248,8 +258,8 @@ class SQLAdapter(DatabaseAdapter):
 | 中 | 查询翻译器 | 二 | 低成本高价值 |
 | 中 | 索引顾问、数据修复师、异常探测器、数据脱敏、智能迁移器 | 三 | 数据治理、运维 |
 | 低 | 变更影响分析 | 三 | 进阶运维 |
-| 低 | 容量规划师、合规扫描器、权限审计、API 脚手架 | 四 | 企业 / DBA |
-| 低 | 跨库同步检查 | 四+ | 多库支持后 |
+| 低 | 容量规划师、合规扫描器、权限审计、API 脚手架 | 五 | 企业 / DBA |
+| 低 | 跨库同步检查 | 五 | 多库支持后 |
 
 ## 5. 把数据库交给 Agent 后能做什么？
 
@@ -270,13 +280,18 @@ class SQLAdapter(DatabaseAdapter):
 
 深入研究 nanobot 后，以下高级特性值得在 queryclaw 中引入：
 
-### 近期可引入（阶段二~三）
+### 已实现
 
 #### A. 子代理系统（后台长任务）
-- **来源**：nanobot 的 `SubagentManager`，通过 `spawn` 工具创建独立后台任务
-- **数据库场景**：大规模数据分析、全表扫描、跨表关联检查等耗时操作
-- **做法**：用户发起任务后 spawn 后台子代理，完成后推送结果回主对话
-- **示例**：「帮我分析过去一年 orders 表每月增长趋势」→ 后台跑完后通知
+- **实现**：`spawn_subagent` 工具（阶段二）
+
+#### E. 消息总线 + 多通道输出
+- **实现**：飞书、钉钉通道，`queryclaw serve`（阶段四）
+
+#### H. 数据血缘追踪
+- **实现**：审计表 `_queryclaw_audit_log`，前后快照（阶段二）
+
+### 近期可引入（阶段三）
 
 #### B. 记忆系统（Schema 知识 + 操作历史）
 - **来源**：nanobot 的 `MemoryStore`，双层架构（MEMORY.md + HISTORY.md）
@@ -297,12 +312,7 @@ class SQLAdapter(DatabaseAdapter):
 - **数据库场景**：Agent 定期巡查数据库状态，发现异常主动通知
 - **示例**：磁盘空间不足、慢查询飙升、死锁频发 → 主动报告
 
-#### E. 消息总线 + 多通道输出
-- **来源**：nanobot 的 `MessageBus`，解耦通道与 Agent；支持 Telegram/Discord/Slack/飞书/钉钉等
-- **数据库场景**：将查询结果、告警、定期报表推送到各通道
-- **策略**：初期 CLI 即可，但架构上预留 MessageBus + Channel 抽象
-
-### 远期可探索（阶段四+）
+### 远期可探索（阶段五+）
 
 #### F. MCP 服务模式
 - 将 queryclaw 暴露为 MCP Server，其他 Agent（Cursor、Claude）直接调用
@@ -311,10 +321,6 @@ class SQLAdapter(DatabaseAdapter):
 #### G. 多数据库同时连接
 - 一个 queryclaw 实例连接多个库（如生产 MySQL + 分析 PostgreSQL + 缓存 Redis）
 - Agent 可做跨库分析：「对比 MySQL 生产库和 PostgreSQL 分析库里 users 表的数据差异」
-
-#### H. 数据血缘追踪
-- 记录每次查询与修改的完整链路（who → what → when → why）
-- 结合记忆系统，构建数据操作图谱
 
 #### I. 自然语言到存储过程/视图
 - Agent 不仅执行一次性查询，还能将常用查询固化为存储过程或视图
@@ -339,8 +345,8 @@ class SQLAdapter(DatabaseAdapter):
 | **MySQL** | 阶段一（首要） | `SQLAdapter` | 最常用的生产数据库 |
 | **SQLite** | 阶段一 | `SQLAdapter` | 零配置，开发/测试/演示用 |
 | **PostgreSQL** | 阶段二~三 | `SQLAdapter` | 生态丰富，高级 SQL 特性 |
-| **MongoDB** | 阶段四+ | `DocumentAdapter` | 文档型，MQL 代替 SQL |
-| **Redis** | 阶段四+ | `KVAdapter` | Key-Value，命令式交互 |
+| **MongoDB** | 阶段五 | `DocumentAdapter` | 文档型，MQL 代替 SQL |
+| **Redis** | 阶段五 | `KVAdapter` | Key-Value，命令式交互 |
 | **Elasticsearch** | 远期 | `SearchAdapter` | 全文搜索与分析 |
 | **ClickHouse** | 远期 | `SQLAdapter` | 列存分析 |
 
@@ -351,7 +357,7 @@ class SQLAdapter(DatabaseAdapter):
 
 ---
 
-### 7.1 向量数据库与 AI 原生数据库（阶段四+）
+### 7.1 向量数据库与 AI 原生数据库（阶段五+）
 
 与向量库、AI 原生库结合可形成差异化亮点：
 
@@ -372,7 +378,7 @@ class SQLAdapter(DatabaseAdapter):
 
 ## 8. 实施阶段（更新版）
 
-### 阶段一：MVP —— 只读 Agent（当前阶段）
+### 阶段一：MVP —— 只读 Agent *（已完成）*
 
 搭建主循环 + 只读数据库工具：
 
@@ -384,7 +390,7 @@ class SQLAdapter(DatabaseAdapter):
 - 基础配置系统
 - 基础技能加载
 
-### 阶段二：写操作 + 安全 + PostgreSQL
+### 阶段二：写操作 + 安全 + PostgreSQL *（已完成）*
 
 - 工具：`data_modify`、`ddl_execute`、`transaction`
 - 安全层：校验器、试跑、审计日志
@@ -408,17 +414,17 @@ class SQLAdapter(DatabaseAdapter):
 - 通道模式下，当 `require_confirmation=True` 时拒绝破坏性操作
 - 详见 [PLAN_PHASE4_CHANNELS_CN.md](PLAN_PHASE4_CHANNELS_CN.md)
 
-### 阶段四+：生态集成 + 更多数据库
+### 阶段五：生态集成
 
 - MCP 服务模式（对外暴露为 MCP 工具）
 - 更多通道（Telegram、Slack 等）
 - MongoDB 适配器
 - 多数据库同时连接
-- 技能（低优先级）：容量规划师、合规扫描器、权限审计、API 脚手架；跨库同步检查（阶段四+）
+- 技能（低优先级）：容量规划师、合规扫描器、权限审计、API 脚手架；跨库同步检查（阶段五）
 - Web UI（可选）
 - 自定义工具/适配器插件体系
 
-### 阶段四+：向量与 AI 原生库
+### 阶段五+：向量与 AI 原生数据库
 
 - 向量存储/向量列支持（pgvector 或侧挂向量库）；语义 Schema 检索、混合查询、记忆向量化
 - AI 列扩展：生成 embedding 列
@@ -426,12 +432,6 @@ class SQLAdapter(DatabaseAdapter):
 
 ---
 
-## 待办（阶段一）
+## 待办（阶段一）*（已全部完成）*
 
-- **phase1-db-adapter**：实现 DatabaseAdapter + SQLAdapter 抽象 + MySQL 适配器 + SQLite 适配器 (`queryclaw/db/`)
-- **phase1-providers**：从 nanobot 移植 LLM 提供方层到 `queryclaw/providers/`
-- **phase1-tools**：实现 Tool 抽象 + ToolRegistry + 只读工具（schema_inspect, query_execute, explain_plan）
-- **phase1-agent**：实现 ReACT AgentLoop + 带 schema 上下文的 ContextBuilder
-- **phase1-config**：配置系统（DB 连接 + LLM 提供方）
-- **phase1-cli**：CLI 交互式对话（typer + prompt_toolkit）
-- **phase1-skills**：SkillsLoader + 至少一个内置技能（如 data_analysis）
+详见 [PLAN_PHASE1_ARCHIVE.md](PLAN_PHASE1_ARCHIVE.md)。

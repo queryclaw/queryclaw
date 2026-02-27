@@ -4,6 +4,15 @@
 
 ---
 
+## 0.4.5 (2026-02-27)
+
+### Changes
+
+- **Agent identity**: Reworked system prompt to reflect all capabilities — schema inspection, query execution, EXPLAIN, subagent delegation, and (when read_only=false) data modification, DDL, transactions. Capabilities list is now dynamic based on read_only and enable_subagent.
+- **ContextBuilder**: Added read_only and enable_subagent parameters; identity guidelines adapt to available tools.
+
+---
+
 ## 0.4.4 (2026-02-27)
 
 ### Fixes

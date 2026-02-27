@@ -67,7 +67,11 @@ class AgentLoop:
 
         self.tools = ToolRegistry()
         self.skills = SkillsLoader()
-        self.context = ContextBuilder(db, self.skills)
+        self.context = ContextBuilder(
+            db, self.skills,
+            read_only=self.safety_policy.read_only,
+            enable_subagent=enable_subagent,
+        )
         self.memory = MemoryStore()
         self.subagent_spawner = SubAgentSpawner(provider, db, model=self.model)
         self._sessions: dict[str, MemoryStore] = {}

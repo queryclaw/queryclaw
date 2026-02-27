@@ -17,10 +17,18 @@ class ContextBuilder:
     schema information so the LLM always knows the available tables and columns.
     """
 
-    def __init__(self, db: SQLAdapter, skills: SkillsLoader | None = None) -> None:
+    def __init__(
+        self,
+        db: SQLAdapter,
+        skills: SkillsLoader | None = None,
+        read_only: bool = True,
+        enable_subagent: bool = True,
+    ) -> None:
         self._db = db
         self._skills = skills or SkillsLoader()
         self._schema_cache: str | None = None
+        self._read_only = read_only
+        self._enable_subagent = enable_subagent
 
     async def build_system_prompt(self) -> str:
         """Build the full system prompt with identity, schema, and skills."""
@@ -96,10 +104,32 @@ class ContextBuilder:
         runtime = f"{'macOS' if system == 'Darwin' else system} {platform.machine()}, Python {platform.python_version()}"
         now = datetime.now().strftime("%Y-%m-%d %H:%M (%A)")
 
+        capabilities = [
+            "**Schema inspection** — view tables, columns, indexes, foreign keys",
+            "**Query execution** — run SELECT queries and return results",
+            "**Performance analysis** — use EXPLAIN to show execution plans",
+        ]
+        if self._enable_subagent:
+            capabilities.append("**Subagent delegation** — spawn_subagent for complex or isolated tasks")
+        if not self._read_only:
+            capabilities.extend([
+                "**Data modification** — INSERT, UPDATE, DELETE via data_modify (with dry-run and audit)",
+                "**DDL** — CREATE, ALTER, DROP via ddl_execute (destructive ops may require confirmation)",
+                "**Transactions** — BEGIN, COMMIT, ROLLBACK for multi-statement operations",
+            ])
+
+        write_note = "" if self._read_only else (
+            "\n- Write operations go through dry-run validation and audit logging; "
+            "destructive ops may require user confirmation."
+        )
+
         return f"""# QueryClaw — AI Database Agent
 
-You are QueryClaw, an AI-native database agent. Your job is to help users
-explore, query, and understand their database using natural language.
+You are QueryClaw, an AI-native database agent. You help users explore, query, and understand their database using natural language.
+{f"You can also modify data, run DDL, and manage transactions when requested." if not self._read_only else ""}
+
+## Capabilities
+{chr(10).join(f"- {c}" for c in capabilities)}
 
 ## Runtime
 {runtime}
@@ -108,10 +138,11 @@ Current time: {now}
 ## Guidelines
 - Use the provided tools to inspect schema, run queries, and analyze execution plans.
 - Always inspect the schema before writing queries if you're unsure about table/column names.
-- Only execute SELECT queries — you are in read-only mode (Phase 1).
 - Present results clearly and concisely; summarize large result sets.
 - If a query fails, analyze the error and suggest a fix.
-- When asked about performance, use explain_plan to show the execution plan."""
+- When asked about performance, use explain_plan to show the execution plan.
+- Use the Skills below for domain-specific workflows (data analysis, schema docs, AI column, test data, etc.).
+{'- Only execute SELECT queries — you are in read-only mode.' if self._read_only else write_note}"""
 
     @staticmethod
     def _get_guidelines() -> str:

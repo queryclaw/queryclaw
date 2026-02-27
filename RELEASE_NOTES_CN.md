@@ -4,6 +4,15 @@
 
 ---
 
+## 0.4.5 (2026-02-27)
+
+### 变更
+
+- **Agent identity**：重写 system prompt，完整反映能力 — 结构查看、查询执行、EXPLAIN、子代理委派，以及（read_only=false 时）数据修改、DDL、事务。能力列表根据 read_only 和 enable_subagent 动态生成。
+- **ContextBuilder**：新增 read_only、enable_subagent 参数；identity 规则随可用工具自适应。
+
+---
+
 ## 0.4.4 (2026-02-27)
 
 ### 修复

@@ -1,6 +1,6 @@
 # Fix Plan: Skills Content Injection
 
-> [中文版](FIX_SKILLS_INJECTION_CN.md)
+> [中文版](zh/FIX_SKILLS_INJECTION.md)
 
 ## Problem Summary
 

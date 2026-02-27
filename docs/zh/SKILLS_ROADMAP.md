@@ -10,7 +10,7 @@
 
 ### 1. AI 列（AI Column）
 
-> 已有独立设计文档：[DESIGN_AI_COLUMN_CN.md](DESIGN_AI_COLUMN_CN.md)
+> 已有独立设计文档：[DESIGN_AI_COLUMN.md](DESIGN_AI_COLUMN.md)
 
 基于已有表数据，通过 LLM 生成或填充目标列（摘要、分类、翻译、评分、标签等）。突破传统数据库只能用确定性表达式派生列的限制。
 

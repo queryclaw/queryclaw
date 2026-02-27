@@ -2,7 +2,7 @@
 
 This doc analyzes whether the current **Tools** and **Skills** design can support the project “evolving by itself” (e.g. the agent or the system adding new capabilities over time), and what would be needed.
 
-> [中文版](SELF_EVOLUTION_ANALYSIS_CN.md)
+> [中文版](zh/SELF_EVOLUTION_ANALYSIS.md)
 
 ---
 

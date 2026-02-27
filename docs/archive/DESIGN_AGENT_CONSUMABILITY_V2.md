@@ -1,6 +1,6 @@
 # Designing QueryClaw for Other Agents — v2
 
-> [中文版](DESIGN_AGENT_CONSUMABILITY_V2_CN.md)
+> [中文版](../zh/archive/DESIGN_AGENT_CONSUMABILITY_V2.md)
 
 ## The Core Tension: Who Thinks?
 

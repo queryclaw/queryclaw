@@ -1,6 +1,6 @@
 # Feishu Channel Setup Guide
 
-> [中文版](FEISHU_SETUP_CN.md)
+> [中文版](zh/FEISHU_SETUP.md)
 
 This guide explains how to integrate QueryClaw with Feishu so the Agent can receive questions and reply in the Feishu app.
 

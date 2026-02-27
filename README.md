@@ -217,11 +217,11 @@ pip install queryclaw[all]
 
 ## Documentation
 
-- **[User Manual](docs/USER_MANUAL.md)** ([中文](docs/USER_MANUAL_CN.md)) — Install, configure, and use QueryClaw (current version)
+- **[User Manual](docs/USER_MANUAL.md)** ([中文](docs/zh/USER_MANUAL.md)) — Install, configure, and use QueryClaw (current version)
 - **[Release Notes](RELEASE_NOTES.md)** ([中文](RELEASE_NOTES_CN.md)) — Version history and changelog
-- [Architecture & Implementation Plan](docs/PLAN_ARCHITECTURE.md) ([中文](docs/PLAN_ARCHITECTURE_CN.md))
-- [Skills Roadmap](docs/SKILLS_ROADMAP.md) ([中文](docs/SKILLS_ROADMAP_CN.md))
-- [Self-Evolution Analysis (Tools & Skills)](docs/SELF_EVOLUTION_ANALYSIS.md) ([中文](docs/SELF_EVOLUTION_ANALYSIS_CN.md))
+- [Architecture & Implementation Plan](docs/PLAN_ARCHITECTURE.md) ([中文](docs/zh/PLAN_ARCHITECTURE.md))
+- [Skills Roadmap](docs/SKILLS_ROADMAP.md) ([中文](docs/zh/SKILLS_ROADMAP.md))
+- [Self-Evolution Analysis (Tools & Skills)](docs/SELF_EVOLUTION_ANALYSIS.md) ([中文](docs/zh/SELF_EVOLUTION_ANALYSIS.md))
 
 ## Contributing
 

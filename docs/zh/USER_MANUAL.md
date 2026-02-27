@@ -269,8 +269,8 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 
 **通道对接指南：**
 
-- **飞书**：详见 [FEISHU_SETUP_CN.md](FEISHU_SETUP_CN.md)
-- **钉钉**：详见 [DINGTALK_SETUP_CN.md](DINGTALK_SETUP_CN.md)
+- **飞书**：详见 [FEISHU_SETUP.md](FEISHU_SETUP.md)
+- **钉钉**：详见 [DINGTALK_SETUP.md](DINGTALK_SETUP.md)
 
 **配置示例：**
 
@@ -414,7 +414,7 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 
 技能用于在特定类型任务上引导 Agent 行为。Agent 通过 `read_skill` 工具按需加载 `SKILL.md` 工作流。
 
-**内置技能：** data_analysis、test_data_factory、ai_column、data_detective、query_translator、schema_documenter。详见 [技能路线图](SKILLS_ROADMAP_CN.md)。
+**内置技能：** data_analysis、test_data_factory、ai_column、data_detective、query_translator、schema_documenter。详见 [技能路线图](SKILLS_ROADMAP.md)。
 
 ---
 
@@ -450,7 +450,7 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 
 ## 相关文档
 
-- [飞书通道对接](FEISHU_SETUP_CN.md) | [钉钉通道对接](DINGTALK_SETUP_CN.md)  
-- [架构与实现计划](PLAN_ARCHITECTURE_CN.md)（[英文](PLAN_ARCHITECTURE.md)）  
-- [技能路线图](SKILLS_ROADMAP_CN.md)（[英文](SKILLS_ROADMAP.md)）  
+- [飞书通道对接](FEISHU_SETUP.md) | [钉钉通道对接](DINGTALK_SETUP.md)  
+- [架构与实现计划](PLAN_ARCHITECTURE.md)（[英文](../PLAN_ARCHITECTURE.md)）  
+- [技能路线图](SKILLS_ROADMAP.md)（[英文](../SKILLS_ROADMAP.md)）  
 - [Phase 1 计划归档](PLAN_PHASE1_ARCHIVE.md) | [Phase 2 计划归档](PLAN_PHASE2_ARCHIVE.md)

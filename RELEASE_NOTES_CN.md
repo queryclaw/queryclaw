@@ -133,7 +133,7 @@
 
 ### 变更
 
-- 阶段四计划文档：[PLAN_PHASE4_CHANNELS_CN.md](docs/PLAN_PHASE4_CHANNELS_CN.md)。
+- 阶段四计划文档：[PLAN_PHASE4_CHANNELS_CN.md](docs/zh/PLAN_PHASE4_CHANNELS.md)。
 - README、USER_MANUAL、PLAN_ARCHITECTURE 已更新以支持多通道。
 
 ---

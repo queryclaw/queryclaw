@@ -1,6 +1,6 @@
 # Design for Being Used by Other Agents
 
-> [中文版](DESIGN_AGENT_CONSUMABILITY_CN.md)
+> [中文版](../zh/archive/DESIGN_AGENT_CONSUMABILITY.md)
 
 This doc outlines what QueryClaw would need so that **other agents** (e.g. Cursor, Claude Desktop, orchestration agents, or custom ReACT loops) can discover, call, and compose with it reliably. It complements the existing roadmap (e.g. Phase 4 MCP) with concrete design dimensions.
 

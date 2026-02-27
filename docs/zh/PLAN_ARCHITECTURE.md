@@ -237,7 +237,7 @@ class SQLAdapter(DatabaseAdapter):
 
 ### 4.6 技能系统 (`queryclaw/skills/`)
 
-技能采用 SKILL.md 格式（与 nanobot 一致）。每个技能对应一套领域工作流，供 Agent 按场景调用。完整目录与优先级见 [docs/SKILLS_ROADMAP_CN.md](SKILLS_ROADMAP_CN.md)；下表为阶段映射。
+技能采用 SKILL.md 格式（与 nanobot 一致）。每个技能对应一套领域工作流，供 Agent 按场景调用。完整目录与优先级见 [SKILLS_ROADMAP.md](SKILLS_ROADMAP.md)；下表为阶段映射。
 
 **按工作阶段：**
 
@@ -412,7 +412,7 @@ class SQLAdapter(DatabaseAdapter):
 - `queryclaw serve` — 通道模式下运行 Agent；在飞书/钉钉中提问并接收回复
 - 可选依赖：`queryclaw[feishu]`、`queryclaw[dingtalk]`
 - 通道模式下，当 `require_confirmation=True` 时拒绝破坏性操作
-- 详见 [PLAN_PHASE4_CHANNELS_CN.md](PLAN_PHASE4_CHANNELS_CN.md)
+- 详见 [PLAN_PHASE4_CHANNELS.md](PLAN_PHASE4_CHANNELS.md)
 
 ### 阶段五：生态集成
 

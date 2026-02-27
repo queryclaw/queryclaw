@@ -1,6 +1,6 @@
 # QueryClaw: AI-Native Database Agent -- Architecture & Implementation Plan
 
-> Chinese version: [PLAN_ARCHITECTURE_CN.md](PLAN_ARCHITECTURE_CN.md)
+> Chinese version: [中文版](zh/PLAN_ARCHITECTURE.md)
 
 ## 1. Core Concept
 

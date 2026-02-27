@@ -123,7 +123,7 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 | **异常探测器** | 主动发现离群值、分布偏移、可疑模式 |
 | **智能迁移器** | 用自然语言描述变更，自动生成迁移脚本与回滚方案 |
 
-> 完整列表与优先级：[docs/SKILLS_ROADMAP_CN.md](docs/SKILLS_ROADMAP_CN.md)
+> 完整列表与优先级：[docs/zh/SKILLS_ROADMAP.md](docs/zh/SKILLS_ROADMAP.md)
 
 ## 路线图
 
@@ -183,7 +183,7 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 | **AI 原生库** | 统一入口：简单查数用库自带 NL；复杂多步、试跑/回滚、技能编排用 QueryClaw 的 ReACT + 工具。 |
 | **AI 原生库** | 技能层补足：测试数据工厂、数据侦探、AI 列、合规扫描；关系型 + 向量 + AI 原生库统一记忆与审计。 |
 
-> 详细架构计划：[docs/PLAN_ARCHITECTURE_CN.md](docs/PLAN_ARCHITECTURE_CN.md)
+> 详细架构计划：[docs/zh/PLAN_ARCHITECTURE.md](docs/zh/PLAN_ARCHITECTURE.md)
 
 ## 安装
 
@@ -217,11 +217,11 @@ pip install queryclaw[all]
 
 ## 文档
 
-- **[用户手册](docs/USER_MANUAL_CN.md)**（[English](docs/USER_MANUAL.md)）— 安装、配置与使用（当前版本）
+- **[用户手册](docs/zh/USER_MANUAL.md)**（[English](docs/USER_MANUAL.md)）— 安装、配置与使用（当前版本）
 - **[版本说明](RELEASE_NOTES_CN.md)**（[English](RELEASE_NOTES.md)）— 版本历史与更新日志
-- [架构与实施计划](docs/PLAN_ARCHITECTURE_CN.md)（[English](docs/PLAN_ARCHITECTURE.md)）
-- [Skills 路线图](docs/SKILLS_ROADMAP_CN.md)（[English](docs/SKILLS_ROADMAP.md)）
-- [自我演进分析（Tools 与 Skills）](docs/SELF_EVOLUTION_ANALYSIS_CN.md)（[English](docs/SELF_EVOLUTION_ANALYSIS.md)）
+- [架构与实施计划](docs/zh/PLAN_ARCHITECTURE.md)（[English](docs/PLAN_ARCHITECTURE.md)）
+- [Skills 路线图](docs/zh/SKILLS_ROADMAP.md)（[English](docs/SKILLS_ROADMAP.md)）
+- [自我演进分析（Tools 与 Skills）](docs/zh/SELF_EVOLUTION_ANALYSIS.md)（[English](docs/SELF_EVOLUTION_ANALYSIS.md)）
 
 ## 贡献
 

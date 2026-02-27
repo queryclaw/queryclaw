@@ -1,6 +1,6 @@
 # Design: Interactive Channel Setup
 
-> [中文版](DESIGN_CHANNELS_SETUP_CN.md)
+> [中文版](zh/DESIGN_CHANNELS_SETUP.md)
 
 ## Goal
 

@@ -1,6 +1,6 @@
 # DingTalk Channel Setup Guide
 
-> [中文版](DINGTALK_SETUP_CN.md)
+> [中文版](zh/DINGTALK_SETUP.md)
 
 This guide explains how to integrate QueryClaw with DingTalk so the Agent can receive questions and reply in the DingTalk app.
 

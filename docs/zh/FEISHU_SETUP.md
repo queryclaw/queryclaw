@@ -10,7 +10,7 @@
 
 - 飞书企业账号（需有应用开发权限）
 - 本地或服务器能访问飞书 API
-- QueryClaw 已配置数据库和 LLM（参见 [USER_MANUAL_CN.md](USER_MANUAL_CN.md)）
+- QueryClaw 已配置数据库和 LLM（参见 [USER_MANUAL.md](USER_MANUAL.md)）
 
 ---
 

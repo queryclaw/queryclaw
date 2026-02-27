@@ -1,6 +1,6 @@
 # AI Column -- Design Document
 
-> Chinese version: [DESIGN_AI_COLUMN_CN.md](DESIGN_AI_COLUMN_CN.md)
+> Chinese version: [中文版](zh/DESIGN_AI_COLUMN.md)
 
 ## 1. Overview
 

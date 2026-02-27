@@ -1,6 +1,6 @@
 # QueryClaw Skills Roadmap
 
-> Chinese version: [SKILLS_ROADMAP_CN.md](SKILLS_ROADMAP_CN.md)
+> Chinese version: [中文版](zh/SKILLS_ROADMAP.md)
 
 This document lists the functional scenarios that queryclaw can implement through its Skill system, organized by developer workflow stages. Each Skill is annotated with its core value proposition (what traditional tools cannot do but an Agent can) and suggested priority.
 

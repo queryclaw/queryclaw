@@ -1,5 +1,7 @@
 # QueryClaw User Manual
 
+> [中文版](zh/USER_MANUAL.md)
+
 **Version 0.4.x** — Database agent with write operations, safety layer, PostgreSQL support, subagent system, and multi-channel output (Feishu, DingTalk)
 
 This manual describes how to install, configure, and use QueryClaw to chat with your database in natural language.

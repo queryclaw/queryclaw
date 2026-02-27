@@ -1,6 +1,6 @@
 # Design: read_skill Tool
 
-> [中文版](DESIGN_READ_SKILL_TOOL_CN.md)
+> [中文版](zh/DESIGN_READ_SKILL_TOOL.md)
 
 ## Goal
 

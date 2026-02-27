@@ -1,6 +1,6 @@
 # Phase 4 Multi-Channel Output (Feishu + DingTalk)
 
-> [中文版](PLAN_PHASE4_CHANNELS_CN.md)
+> [中文版](zh/PLAN_PHASE4_CHANNELS.md)
 
 ## Scope
 

@@ -4,6 +4,15 @@
 
 ---
 
+## 0.4.2 (2026-02-27)
+
+### Changes
+
+- USER_MANUAL: Added detailed Feishu "add bot" steps (group + private chat), private chat troubleshooting, `im:message.p2p_chat` permission.
+- Feishu channel: Added debug logging (`[Feishu]` prefix) to trace message flow when private chat has no reply.
+
+---
+
 ## 0.4.1 (2026-02-27)
 
 ### Fixes

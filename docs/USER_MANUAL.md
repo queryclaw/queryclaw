@@ -252,13 +252,25 @@ The Feishu channel uses **WebSocket long connection** — no public IP or domain
 3. **Enable bot**: In "Features" → "Bot", enable the bot capability.
 4. **Permissions**: In "Permissions", add:
    - `im:message` (receive, send, send in groups).
+   - `im:message.p2p_chat` (receive and send private chat messages; required for 1:1 chat).
    - `im:message.group_at_msg` (receive @mentions in groups).
 5. **Event subscription**: In "Events & Callbacks", select **"Use long connection to receive events"** and save.
    - You must publish the app and run `queryclaw serve` to establish the connection before saving can succeed.
 6. **Publish app**: In "Version & Release", create a version and publish.
-7. **Add bot**: In the Feishu client, search for your bot and add it to a group or start a chat.
+7. **Add bot**:
+   - **Group chat**: Open the group → tap "⋯" (top right) → "Group bots" → "Add bot" → search for your app name and add. Then @mention the bot in the group to ask questions.
+   - **Private chat**: In the Feishu client search bar, type your app name, select it, and start a conversation.
 8. **Configure QueryClaw**: In `config.json`, set `channels.feishu` with `app_id`, `app_secret`, and `enabled: true`.
 9. **Start**: Run `pip install queryclaw[feishu]` then `queryclaw serve`.
+
+**Can find the app in search but private chat does not work?** Common causes:
+
+| Cause | Check and fix |
+|-------|---------------|
+| **App availability** | When publishing, the "Availability" scope must include your user. In "Version & Release" → create new version → set availability to "All members" or add your org. Re-publish. |
+| **Event subscription not saved** | "Events & Callbacks" must use "Use long connection to receive events" and save successfully. Run `queryclaw serve` first to establish the connection, then save. If save fails, check serve is running and network can reach Feishu. |
+| **serve not running** | Ensure `queryclaw serve` is running; the bot cannot receive or reply when it is stopped. |
+| **Permissions not granted** | In "Permissions", confirm `im:message`, `im:message.p2p_chat` etc. are applied and granted. Re-publish after adding new permissions. |
 
 **Example:**
 

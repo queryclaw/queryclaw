@@ -274,8 +274,11 @@ class FeishuChannel(BaseChannel):
 
     def _on_message_sync(self, data: Any) -> None:
         """Sync handler for incoming messages (called from WebSocket thread)."""
-        if self._loop and self._loop.is_running():
-            asyncio.run_coroutine_threadsafe(self._on_message(data), self._loop)
+        logger.info("[Feishu] Received event (sync handler)")
+        if not self._loop or not self._loop.is_running():
+            logger.warning("[Feishu] Main loop not available, cannot process message")
+            return
+        asyncio.run_coroutine_threadsafe(self._on_message(data), self._loop)
 
     async def _on_message(self, data: Any) -> None:
         """Handle incoming message from Feishu."""
@@ -285,7 +288,10 @@ class FeishuChannel(BaseChannel):
             sender = event.sender
 
             message_id = message.message_id
+            chat_type = getattr(message, "chat_type", "?")
+            logger.info("[Feishu] Processing message chat_type={} msg_id={}", chat_type, message_id)
             if message_id in self._processed_message_ids:
+                logger.debug("[Feishu] Skipping duplicate message_id")
                 return
             self._processed_message_ids[message_id] = None
 
@@ -293,12 +299,14 @@ class FeishuChannel(BaseChannel):
                 self._processed_message_ids.popitem(last=False)
 
             if sender.sender_type == "bot":
+                logger.debug("[Feishu] Skipping bot sender")
                 return
 
             sender_id = sender.sender_id.open_id if sender.sender_id else "unknown"
             chat_id = message.chat_id
             chat_type = message.chat_type
             msg_type = message.message_type
+            logger.info("[Feishu] chat_id={} msg_type={} sender={}", chat_id, msg_type, sender_id)
 
             if FEISHU_AVAILABLE and Emoji:
                 loop = asyncio.get_running_loop()
@@ -327,9 +335,11 @@ class FeishuChannel(BaseChannel):
 
             content = "\n".join(content_parts) if content_parts else ""
             if not content:
+                logger.warning("[Feishu] Empty content extracted, msg_type={} raw={}", msg_type, (message.content or "")[:100])
                 return
 
             reply_to = chat_id if chat_type == "group" else sender_id
+            logger.info("[Feishu] Forwarding to bus: reply_to={} content_len={}", reply_to, len(content))
             await self._handle_message(
                 sender_id=sender_id,
                 chat_id=reply_to,

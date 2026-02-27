@@ -17,6 +17,8 @@ from prompt_toolkit.patch_stdout import patch_stdout
 
 from queryclaw import __version__
 from queryclaw.agent.loop import AgentLoop
+from queryclaw.bus.queue import MessageBus
+from queryclaw.channels.manager import ChannelManager
 from queryclaw.config.loader import get_config_path, load_config, save_config
 from queryclaw.config.schema import Config
 from queryclaw.db.registry import AdapterRegistry
@@ -88,6 +90,7 @@ def onboard(
     console.print("- Configure your database in the `database` section")
     console.print("- Configure one LLM provider API key in `providers`")
     console.print("- Start chat: `queryclaw chat -m \"show tables\"`")
+    console.print("- Or enable Feishu/DingTalk in `channels` and run: `queryclaw serve`")
 
 
 def _make_provider(config: Config) -> LiteLLMProvider:
@@ -227,3 +230,74 @@ def chat(
 
     if exit_code != 0:
         raise typer.Exit(code=exit_code)
+
+
+async def _run_serve(config: Config) -> None:
+    """Run the multi-channel serve mode."""
+    bus = MessageBus()
+    manager = ChannelManager(config, bus)
+
+    if not manager.enabled_channels:
+        console.print("[red]Error:[/red] No channels enabled. Configure feishu or dingtalk in config.")
+        raise typer.Exit(code=1)
+
+    provider = _make_provider(config)
+    adapter = await AdapterRegistry.create_and_connect(**config.database.model_dump())
+
+    try:
+        safety = SafetyPolicy(
+            read_only=config.safety.read_only,
+            max_affected_rows=config.safety.max_affected_rows,
+            require_confirmation=config.safety.require_confirmation,
+            allowed_tables=config.safety.allowed_tables,
+            blocked_patterns=config.safety.blocked_patterns,
+            audit_enabled=config.safety.audit_enabled,
+        )
+        agent = AgentLoop(
+            provider=provider,
+            db=adapter,
+            model=config.agent.model,
+            max_iterations=config.agent.max_iterations,
+            temperature=config.agent.temperature,
+            max_tokens=config.agent.max_tokens,
+            safety_policy=safety,
+            confirmation_callback=None,  # Channel mode: reject destructive ops
+            bus=bus,
+        )
+
+        manager_task = asyncio.create_task(manager.start_all())
+        agent_task = asyncio.create_task(agent.run())
+
+        try:
+            await asyncio.gather(manager_task, agent_task)
+        except asyncio.CancelledError:
+            pass
+        finally:
+            agent.stop()
+            await manager.stop_all()
+    finally:
+        await adapter.close()
+
+
+@app.command()
+def serve(
+    config_path: Path | None = typer.Option(
+        None,
+        "--config",
+        "-c",
+        help="Custom config path (default: ~/.queryclaw/config.json).",
+    ),
+) -> None:
+    """Start QueryClaw in multi-channel mode (Feishu, DingTalk)."""
+    config = load_config(config_path)
+
+    try:
+        asyncio.run(_run_serve(config))
+    except KeyboardInterrupt:
+        console.print("\n[dim]Shutting down...[/dim]")
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(code=1) from e
+    except Exception as e:
+        console.print(f"[red]Unexpected error:[/red] {e}")
+        raise typer.Exit(code=1) from e

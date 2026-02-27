@@ -400,10 +400,18 @@ class SQLAdapter(DatabaseAdapter):
 - 定时任务系统（Cron）+ 主动唤醒（Heartbeat）
 - 复杂任务的多步规划
 
-### 阶段四：生态集成 + 更多数据库
+### 阶段四：多通道输出（已实现）
+
+- 消息总线 + 双向通道（飞书、钉钉）
+- `queryclaw serve` — 通道模式下运行 Agent；在飞书/钉钉中提问并接收回复
+- 可选依赖：`queryclaw[feishu]`、`queryclaw[dingtalk]`
+- 通道模式下，当 `require_confirmation=True` 时拒绝破坏性操作
+- 详见 [PLAN_PHASE4_CHANNELS_CN.md](PLAN_PHASE4_CHANNELS_CN.md)
+
+### 阶段四+：生态集成 + 更多数据库
 
 - MCP 服务模式（对外暴露为 MCP 工具）
-- 消息总线 + 多通道输出（Telegram/飞书等）
+- 更多通道（Telegram、Slack 等）
 - MongoDB 适配器
 - 多数据库同时连接
 - 技能（低优先级）：容量规划师、合规扫描器、权限审计、API 脚手架；跨库同步检查（阶段四+）

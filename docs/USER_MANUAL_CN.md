@@ -1,6 +1,6 @@
 # QueryClaw 用户手册
 
-**版本 0.3.x** — 带写操作、安全层、PostgreSQL 支持和子代理系统的数据库 Agent
+**版本 0.3.x** — 带写操作、安全层、PostgreSQL 支持、子代理系统和多通道输出（飞书、钉钉）的数据库 Agent
 
 本文介绍如何安装、配置和使用 QueryClaw，通过自然语言与数据库对话。
 
@@ -33,7 +33,7 @@ QueryClaw 是一个 **AI 原生数据库 Agent**，可以用自然语言向数�
 - **写入工具：** `data_modify`（INSERT/UPDATE/DELETE）、`ddl_execute`（CREATE/ALTER/DROP）、`transaction`（BEGIN/COMMIT/ROLLBACK）  
 - **安全层：** 策略引擎、SQL AST 校验器、试跑引擎、人工确认、审计日志  
 - **技能：** 数据分析、Schema 文档生成、查询翻译器、数据侦探、AI 列、测试数据工厂  
-- **CLI：** `onboard`（创建配置）、`chat`（交互或单轮对话）
+- **CLI：** `onboard`（创建配置）、`chat`（交互或单轮对话）、`serve`（多通道模式）
 
 ---
 
@@ -57,7 +57,19 @@ pip install queryclaw
 pip install queryclaw[postgresql]
 ```
 
-安装所有可选功能：
+安装飞书通道支持：
+
+```bash
+pip install queryclaw[feishu]
+```
+
+安装钉钉通道支持：
+
+```bash
+pip install queryclaw[dingtalk]
+```
+
+安装所有可选功能（PostgreSQL + 飞书 + 钉钉）：
 
 ```bash
 pip install queryclaw[all]
@@ -124,6 +136,7 @@ queryclaw --version
 | `providers`| 各 LLM 提供方的 API Key 及可选 base URL。 |
 | `agent`    | 模型名、迭代次数、温度、最大 token 等。 |
 | `safety`   | 安全策略：只读模式、行数限制、确认规则、审计。 |
+| `channels` | 多通道输出：飞书、钉钉配置（用于 `serve` 模式）。 |
 
 ### 数据库 (database)
 
@@ -232,6 +245,47 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 | `blocked_patterns`   | list       | `["DROP DATABASE", "DROP SCHEMA"]` | 始终拒绝的 SQL 模式。 |
 | `audit_enabled`      | bool       | `true`                           | 将所有操作写入审计日志表。 |
 
+### 通道 (channels)
+
+多通道输出，用于 `queryclaw serve`。启用飞书和/或钉钉后，可在对应应用中提问并接收 Agent 回复。
+
+**飞书：**
+
+| 字段         | 类型   | 说明 |
+|--------------|--------|------|
+| `enabled`    | bool   | 是否启用飞书通道。 |
+| `app_id`     | string | 飞书开放平台应用 ID。 |
+| `app_secret` | string | 应用密钥。 |
+| `allow_from` | list   | 允许的用户 open_id 列表；空表示全部允许。 |
+
+**钉钉：**
+
+| 字段             | 类型   | 说明 |
+|------------------|--------|------|
+| `enabled`        | bool   | 是否启用钉钉通道。 |
+| `client_id`      | string | 钉钉应用 AppKey。 |
+| `client_secret`  | string | AppSecret。 |
+| `allow_from`     | list   | 允许的 staff_id 列表；空表示全部允许。 |
+
+**示例：**
+
+```json
+"channels": {
+  "feishu": {
+    "enabled": true,
+    "app_id": "cli_xxx",
+    "app_secret": "your_secret",
+    "allow_from": []
+  },
+  "dingtalk": {
+    "enabled": false,
+    "client_id": "",
+    "client_secret": "",
+    "allow_from": []
+  }
+}
+```
+
 **示例：**
 
 ```json
@@ -291,6 +345,25 @@ queryclaw chat -m "users 表有多少行？"
 queryclaw chat
 queryclaw chat -c /path/to/config.json
 ```
+
+### `queryclaw serve`
+
+以**多通道模式**启动 QueryClaw，监听飞书和/或钉钉的消息。用户可在这些应用中提问并接收 Agent 回复。
+
+```bash
+queryclaw serve [--config PATH]
+```
+
+| 选项      | 简写 | 说明 |
+|-----------|------|------|
+| `--config`| `-c` | 配置文件路径（默认：`~/.queryclaw/config.json`）。 |
+
+**前置条件：**
+
+- 在配置中启用至少一个通道（见 [通道 (channels)](#通道-channels)）
+- 安装通道依赖：`pip install queryclaw[feishu]` 和/或 `pip install queryclaw[dingtalk]`
+
+**注意：** 通道模式下，当 `safety.require_confirmation` 为 true 时，破坏性操作（INSERT/UPDATE/DELETE/DDL）会被**拒绝**，因为无法进行交互式确认。
 
 ---
 

@@ -9,7 +9,13 @@ from typer.testing import CliRunner
 
 from queryclaw.cli.commands import app
 from queryclaw.config.loader import load_config, save_config
-from queryclaw.config.schema import Config, ProviderConfig, ProvidersConfig
+from queryclaw.config.schema import (
+    ChannelsConfig,
+    Config,
+    FeishuConfig,
+    ProviderConfig,
+    ProvidersConfig,
+)
 from queryclaw.db.base import QueryResult, SQLAdapter, TableInfo, ColumnInfo, IndexInfo, ForeignKeyInfo
 from queryclaw.providers.base import LLMProvider, LLMResponse
 
@@ -143,3 +149,24 @@ def test_version_flag() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
     assert "queryclaw v" in result.stdout
+
+
+def test_serve_no_channels_enabled(tmp_path: Path) -> None:
+    """Serve exits with error when no channels are enabled."""
+    config_path = tmp_path / "cfg.json"
+    cfg = Config(
+        providers=ProvidersConfig(anthropic=ProviderConfig(api_key="sk-test")),
+        channels=ChannelsConfig(),  # feishu and dingtalk disabled
+    )
+    save_config(cfg, config_path)
+
+    result = runner.invoke(app, ["serve", "-c", str(config_path)])
+    assert result.exit_code == 1
+    assert "No channels enabled" in result.stdout
+
+
+def test_serve_command_exists() -> None:
+    """Serve command is registered."""
+    result = runner.invoke(app, ["serve", "--help"])
+    assert result.exit_code == 0
+    assert "multi-channel" in result.stdout or "Feishu" in result.stdout

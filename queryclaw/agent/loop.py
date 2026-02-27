@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from typing import Any
 
@@ -52,6 +53,7 @@ class AgentLoop:
         safety_policy: SafetyPolicy | None = None,
         enable_subagent: bool = True,
         confirmation_callback: ConfirmationCallback | None = None,
+        bus: Any = None,
     ) -> None:
         self.provider = provider
         self.db = db
@@ -61,12 +63,15 @@ class AgentLoop:
         self.max_tokens = max_tokens
         self.safety_policy = safety_policy or SafetyPolicy()
         self.confirmation_callback = confirmation_callback
+        self.bus = bus
 
         self.tools = ToolRegistry()
         self.skills = SkillsLoader()
         self.context = ContextBuilder(db, self.skills)
         self.memory = MemoryStore()
         self.subagent_spawner = SubAgentSpawner(provider, db, model=self.model)
+        self._sessions: dict[str, MemoryStore] = {}
+        self._running = False
 
         self._register_default_tools(max_query_rows, enable_subagent)
 
@@ -188,3 +193,81 @@ class AgentLoop:
         """Clear conversation history and schema cache."""
         self.memory.clear()
         self.context.invalidate_schema_cache()
+
+    async def run(self) -> None:
+        """Run the agent loop, consuming inbound messages and publishing outbound.
+
+        Requires bus to be set. Used by the serve command for channel mode.
+        """
+        if self.bus is None:
+            raise RuntimeError("MessageBus is required for run()")
+        from queryclaw.bus.events import InboundMessage, OutboundMessage
+
+        self._running = True
+        logger.info("Agent loop started (channel mode)")
+
+        while self._running:
+            try:
+                msg = await asyncio.wait_for(self.bus.consume_inbound(), timeout=1.0)
+            except asyncio.TimeoutError:
+                continue
+
+            task = asyncio.create_task(self._dispatch_message(msg))
+            try:
+                await task
+            except Exception as e:
+                logger.exception("Error processing message: {}", e)
+                await self.bus.publish_outbound(
+                    OutboundMessage(
+                        channel=msg.channel,
+                        chat_id=msg.chat_id,
+                        content="Sorry, I encountered an error.",
+                    )
+                )
+
+    def stop(self) -> None:
+        """Stop the agent loop."""
+        self._running = False
+        logger.info("Agent loop stopping")
+
+    async def _dispatch_message(self, msg: Any) -> None:
+        """Process a single inbound message and publish the response."""
+        from queryclaw.bus.events import OutboundMessage
+
+        response = await self._process_message(msg)
+        if response is not None:
+            await self.bus.publish_outbound(response)
+
+    async def _process_message(self, msg: Any) -> Any | None:
+        """Process a single inbound message and return the outbound response."""
+        from queryclaw.bus.events import OutboundMessage
+
+        session_key = msg.session_key
+        memory = self._sessions.get(session_key)
+        if memory is None:
+            memory = MemoryStore()
+            self._sessions[session_key] = memory
+
+        preview = msg.content[:80] + "..." if len(msg.content) > 80 else msg.content
+        logger.info("Processing message from {}:{}: {}", msg.channel, msg.sender_id, preview)
+
+        messages = await self.context.build_messages(
+            history=memory.get_recent(),
+            current_message=msg.content,
+        )
+
+        final_content, tools_used, updated_messages = await self._run_agent_loop(messages)
+
+        memory.add("user", msg.content)
+        if final_content:
+            memory.add("assistant", final_content)
+
+        if tools_used:
+            logger.debug("Tools used: {}", ", ".join(tools_used))
+
+        return OutboundMessage(
+            channel=msg.channel,
+            chat_id=msg.chat_id,
+            content=final_content or "(no response)",
+            metadata=getattr(msg, "metadata", None) or {},
+        )

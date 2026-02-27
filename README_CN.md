@@ -155,10 +155,17 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 - 技能：索引顾问、数据修复师、异常探测器、智能迁移器
 - 复杂任务多步规划
 
-### 阶段四：生态集成
+### 阶段四：多通道输出 *（已完成）*
+
+- 消息总线 + 双向通道（飞书、钉钉）
+- `queryclaw serve` — 通道模式下运行 Agent；在飞书/钉钉中提问并接收回复
+- 可选依赖：`queryclaw[feishu]`、`queryclaw[dingtalk]`
+- 通道模式下，当 `require_confirmation=True` 时拒绝破坏性操作
+
+### 阶段四+：生态集成
 
 - MCP 服务模式（对外暴露为其他 Agent 的工具）
-- 多通道输出（Telegram、Slack、飞书等）
+- 更多通道（Telegram、Slack 等）
 - MongoDB 适配器 + 多数据库同时连接
 - Web UI
 - 自定义工具与适配器插件体系
@@ -190,7 +197,19 @@ pip install queryclaw
 pip install queryclaw[postgresql]
 ```
 
-安装所有可选功能（PostgreSQL + SQL 校验）：
+安装飞书通道支持：
+
+```bash
+pip install queryclaw[feishu]
+```
+
+安装钉钉通道支持：
+
+```bash
+pip install queryclaw[dingtalk]
+```
+
+安装所有可选功能（PostgreSQL + SQL 校验 + 飞书 + 钉钉）：
 
 ```bash
 pip install queryclaw[all]
@@ -201,6 +220,7 @@ pip install queryclaw[all]
 - **[用户手册](docs/USER_MANUAL_CN.md)**（[English](docs/USER_MANUAL.md)）— 安装、配置与使用（当前版本）
 - **[版本说明](RELEASE_NOTES_CN.md)**（[English](RELEASE_NOTES.md)）— 版本历史与更新日志
 - [架构与实施计划](docs/PLAN_ARCHITECTURE_CN.md)（[English](docs/PLAN_ARCHITECTURE.md)）
+- [阶段四多通道计划](docs/PLAN_PHASE4_CHANNELS_CN.md)（[English](docs/PLAN_PHASE4_CHANNELS.md)）
 - [AI 列设计文档](docs/DESIGN_AI_COLUMN_CN.md)（[English](docs/DESIGN_AI_COLUMN.md)）
 - [Skills 路线图](docs/SKILLS_ROADMAP_CN.md)（[English](docs/SKILLS_ROADMAP.md)）
 - [自我演进分析（Tools 与 Skills）](docs/SELF_EVOLUTION_ANALYSIS_CN.md)（[English](docs/SELF_EVOLUTION_ANALYSIS.md)）

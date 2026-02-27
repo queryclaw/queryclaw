@@ -1,6 +1,6 @@
 [project]
 name = "queryclaw"
-version = "0.3.4"
+version = "0.4.0"
 description = "AI-Native Database Agent for Safe & Autonomous Operations — Text-to-SQL with safety guardrails"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,6 +29,13 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+feishu = [
+    "lark-oapi>=1.5.0,<2.0.0",
+]
+dingtalk = [
+    "dingtalk-stream>=0.24.0,<1.0.0",
+    "httpx>=0.28.0",
+]
 postgresql = [
     "asyncpg>=0.29",
 ]
@@ -38,6 +45,9 @@ safety = [
 all = [
     "asyncpg>=0.29",
     "sqlglot>=20.0",
+    "lark-oapi>=1.5.0,<2.0.0",
+    "dingtalk-stream>=0.24.0,<1.0.0",
+    "httpx>=0.28.0",
 ]
 dev = [
     "pytest>=7.0",

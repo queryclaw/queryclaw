@@ -69,6 +69,33 @@ class AgentConfig(Base):
     max_tokens: int = 4096
 
 
+class FeishuConfig(Base):
+    """Feishu/Lark channel configuration using WebSocket long connection."""
+
+    enabled: bool = False
+    app_id: str = ""  # App ID from Feishu Open Platform
+    app_secret: str = ""  # App Secret from Feishu Open Platform
+    encrypt_key: str = ""  # Encrypt Key for event subscription (optional)
+    verification_token: str = ""  # Verification Token for event subscription (optional)
+    allow_from: list[str] = Field(default_factory=list)  # Allowed user open_ids
+
+
+class DingTalkConfig(Base):
+    """DingTalk channel configuration using Stream mode."""
+
+    enabled: bool = False
+    client_id: str = ""  # AppKey
+    client_secret: str = ""  # AppSecret
+    allow_from: list[str] = Field(default_factory=list)  # Allowed staff_ids
+
+
+class ChannelsConfig(Base):
+    """Multi-channel output configuration."""
+
+    feishu: FeishuConfig = Field(default_factory=FeishuConfig)
+    dingtalk: DingTalkConfig = Field(default_factory=DingTalkConfig)
+
+
 class Config(BaseSettings):
     """Root configuration for QueryClaw."""
 
@@ -76,6 +103,7 @@ class Config(BaseSettings):
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     agent: AgentConfig = Field(default_factory=AgentConfig)
     safety: SafetyConfig = Field(default_factory=SafetyConfig)
+    channels: ChannelsConfig = Field(default_factory=ChannelsConfig)
 
     model_config = ConfigDict(env_prefix="QUERYCLAW_", env_nested_delimiter="__")
 

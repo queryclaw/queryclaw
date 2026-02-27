@@ -4,6 +4,22 @@
 
 ---
 
+## 0.4.0 (2026-02-26)
+
+### Features
+
+- **Phase 4 Multi-Channel Output**: Message bus + bidirectional channels (Feishu, DingTalk).
+- **`queryclaw serve`**: Run the agent in channel mode; receive questions from Feishu/DingTalk and reply in-app.
+- **Optional dependencies**: `pip install queryclaw[feishu]` and `pip install queryclaw[dingtalk]`.
+- **Channel safety**: Destructive operations are rejected in channel mode when `require_confirmation=True`.
+
+### Changes
+
+- Phase 4 plan docs: [PLAN_PHASE4_CHANNELS.md](docs/PLAN_PHASE4_CHANNELS.md).
+- README, USER_MANUAL, PLAN_ARCHITECTURE updated for multi-channel.
+
+---
+
 ## 0.3.4 (2026-02-27)
 
 ### Fixes

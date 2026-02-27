@@ -4,6 +4,22 @@
 
 ---
 
+## 0.4.0 (2026-02-26)
+
+### 功能
+
+- **阶段四多通道输出**：消息总线 + 双向通道（飞书、钉钉）。
+- **`queryclaw serve`**：通道模式下运行 Agent；在飞书/钉钉中接收提问并回复。
+- **可选依赖**：`pip install queryclaw[feishu]` 与 `pip install queryclaw[dingtalk]`。
+- **通道安全**：通道模式下，当 `require_confirmation=True` 时拒绝破坏性操作。
+
+### 变更
+
+- 阶段四计划文档：[PLAN_PHASE4_CHANNELS_CN.md](docs/PLAN_PHASE4_CHANNELS_CN.md)。
+- README、USER_MANUAL、PLAN_ARCHITECTURE 已更新以支持多通道。
+
+---
+
 ## 0.3.4 (2026-02-27)
 
 ### 修复

@@ -1,6 +1,6 @@
 # QueryClaw User Manual
 
-**Version 0.3.x** — Database agent with write operations, safety layer, PostgreSQL support, and subagent system
+**Version 0.3.x** — Database agent with write operations, safety layer, PostgreSQL support, subagent system, and multi-channel output (Feishu, DingTalk)
 
 This manual describes how to install, configure, and use QueryClaw to chat with your database in natural language.
 
@@ -33,7 +33,7 @@ QueryClaw is an **AI-native database agent** that lets you ask questions about y
 - **Write tools:** `data_modify` (INSERT/UPDATE/DELETE), `ddl_execute` (CREATE/ALTER/DROP), `transaction` (BEGIN/COMMIT/ROLLBACK)  
 - **Safety layer:** Policy engine, SQL AST validator, dry-run engine, human confirmation, audit logger  
 - **Skills:** Data Analysis, Schema Documenter, Query Translator, Data Detective, AI Column, Test Data Factory  
-- **CLI:** `onboard` (create config), `chat` (interactive or single-turn)
+- **CLI:** `onboard` (create config), `chat` (interactive or single-turn), `serve` (multi-channel mode)
 
 ---
 
@@ -57,7 +57,19 @@ For PostgreSQL support:
 pip install queryclaw[postgresql]
 ```
 
-For all optional features:
+For Feishu channel support:
+
+```bash
+pip install queryclaw[feishu]
+```
+
+For DingTalk channel support:
+
+```bash
+pip install queryclaw[dingtalk]
+```
+
+For all optional features (PostgreSQL + Feishu + DingTalk):
 
 ```bash
 pip install queryclaw[all]
@@ -124,6 +136,7 @@ Configuration is stored in **JSON** at `~/.queryclaw/config.json` by default. Yo
 | `providers` | API keys and optional base URLs for each LLM provider. |
 | `agent` | Model name, iteration limit, temperature, and token limit. |
 | `safety` | Safety policy: read-only mode, row limits, confirmation rules, audit. |
+| `channels` | Multi-channel output: Feishu and DingTalk configuration for `serve` mode. |
 
 ### Database
 
@@ -208,6 +221,47 @@ The agent chooses the provider from the **model** name (e.g. `openrouter/...`, `
 | `temperature`   | float  | `0.1`                            | LLM sampling temperature. |
 | `max_tokens`    | int    | `4096`                           | Max tokens per LLM response. |
 
+### Channels
+
+Multi-channel output for `queryclaw serve`. Enable Feishu and/or DingTalk to receive questions and send responses through those apps.
+
+**Feishu:**
+
+| Field               | Type   | Description |
+|---------------------|--------|-------------|
+| `enabled`           | bool   | Enable Feishu channel. |
+| `app_id`            | string | App ID from Feishu Open Platform. |
+| `app_secret`        | string | App Secret. |
+| `allow_from`        | list   | Allowed user open_ids; empty = allow all. |
+
+**DingTalk:**
+
+| Field               | Type   | Description |
+|---------------------|--------|-------------|
+| `enabled`           | bool   | Enable DingTalk channel. |
+| `client_id`         | string | AppKey from DingTalk. |
+| `client_secret`     | string | AppSecret. |
+| `allow_from`        | list   | Allowed staff_ids; empty = allow all. |
+
+**Example:**
+
+```json
+"channels": {
+  "feishu": {
+    "enabled": true,
+    "app_id": "cli_xxx",
+    "app_secret": "your_secret",
+    "allow_from": []
+  },
+  "dingtalk": {
+    "enabled": false,
+    "client_id": "",
+    "client_secret": "",
+    "allow_from": []
+  }
+}
+```
+
 ---
 
 ## Commands Reference
@@ -254,6 +308,25 @@ queryclaw chat -m "How many rows are in the users table?"
 queryclaw chat
 queryclaw chat -c /path/to/config.json
 ```
+
+### `queryclaw serve`
+
+Starts QueryClaw in **multi-channel mode**, listening for messages from Feishu and/or DingTalk. Users can ask questions in those apps and receive Agent responses.
+
+```bash
+queryclaw serve [--config PATH]
+```
+
+| Option      | Short | Description |
+|-------------|-------|-------------|
+| `--config`  | `-c`  | Config file path (default: `~/.queryclaw/config.json`). |
+
+**Prerequisites:**
+
+- Enable at least one channel in config (see [Channels](#channels))
+- Install channel dependencies: `pip install queryclaw[feishu]` and/or `pip install queryclaw[dingtalk]`
+
+**Note:** In channel mode, destructive operations (INSERT/UPDATE/DELETE/DDL) are **rejected** when `safety.require_confirmation` is true, since interactive confirmation is not available.
 
 ---
 

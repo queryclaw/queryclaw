@@ -346,10 +346,18 @@ Combining with vector stores and AI-native databases adds distinct capabilities:
 - Cron system + Heartbeat (proactive monitoring)
 - Multi-step planning for complex tasks
 
-### Phase 4: Ecosystem Integration + More Databases
+### Phase 4: Multi-Channel Output *(implemented)*
+
+- Message bus + bidirectional channels (Feishu, DingTalk)
+- `queryclaw serve` — run Agent in channel mode; ask questions in Feishu/DingTalk and get responses
+- Optional dependencies: `queryclaw[feishu]`, `queryclaw[dingtalk]`
+- Destructive operations rejected in channel mode when `require_confirmation=True`
+- See [PLAN_PHASE4_CHANNELS.md](PLAN_PHASE4_CHANNELS.md) for implementation details
+
+### Phase 4+: Ecosystem Integration + More Databases
 
 - MCP server mode (expose as MCP tool for other agents)
-- Message bus + multi-channel output (Telegram, Feishu, etc.)
+- Additional channels (Telegram, Slack, etc.)
 - MongoDB adapter
 - Multi-database simultaneous connections
 - Skills (low priority): Capacity Planner, Compliance Scanner, Permission Auditor, API Scaffolding; Cross-DB Sync Checker (Phase 4+)

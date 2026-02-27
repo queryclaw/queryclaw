@@ -7,8 +7,11 @@ import pytest
 
 from queryclaw.config.schema import (
     AgentConfig,
+    ChannelsConfig,
     Config,
     DatabaseConfig,
+    DingTalkConfig,
+    FeishuConfig,
     ProviderConfig,
     ProvidersConfig,
     SafetyConfig,
@@ -81,6 +84,22 @@ class TestSafetyConfig:
         assert cfg.max_affected_rows == 500
 
 
+class TestChannelsConfig:
+    def test_defaults(self):
+        cfg = ChannelsConfig()
+        assert cfg.feishu.enabled is False
+        assert cfg.feishu.app_id == ""
+        assert cfg.dingtalk.enabled is False
+        assert cfg.dingtalk.client_id == ""
+
+    def test_feishu_enabled(self):
+        cfg = ChannelsConfig(
+            feishu=FeishuConfig(enabled=True, app_id="cli_xxx", app_secret="secret"),
+        )
+        assert cfg.feishu.enabled is True
+        assert cfg.feishu.app_id == "cli_xxx"
+
+
 class TestConfig:
     def test_defaults(self):
         cfg = Config()
@@ -88,6 +107,7 @@ class TestConfig:
         assert cfg.agent.max_iterations == 30
         assert isinstance(cfg.providers, ProvidersConfig)
         assert isinstance(cfg.safety, SafetyConfig)
+        assert isinstance(cfg.channels, ChannelsConfig)
         assert cfg.safety.read_only is True
 
     def test_get_provider_no_keys(self):
@@ -141,6 +161,8 @@ class TestConfig:
         assert restored.database.type == "mysql"
         assert restored.database.host == "db.local"
         assert restored.providers.anthropic.api_key == "sk-test"
+        assert "channels" in data
+        assert restored.channels.feishu.enabled is False
 
 
 class TestLoader:

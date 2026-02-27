@@ -6,6 +6,8 @@ from typing import Any
 
 from queryclaw.db.sqlite import SQLiteAdapter
 from queryclaw.tools.base import Tool
+from queryclaw.agent.skills import SkillsLoader
+from queryclaw.tools.read_skill import ReadSkillTool
 from queryclaw.tools.registry import ToolRegistry
 from queryclaw.tools.schema import SchemaInspectTool
 from queryclaw.tools.query import QueryExecuteTool
@@ -181,6 +183,49 @@ class TestToolRegistry:
         result = await reg.execute("fail", {})
         assert "Error executing" in result
         assert "intentional failure" in result
+
+
+# -- ReadSkillTool ------------------------------------------------------------
+
+class TestReadSkillTool:
+    def test_parameters_enum_contains_builtin_skills(self):
+        loader = SkillsLoader()
+        tool = ReadSkillTool(loader)
+        params = tool.parameters
+        enum = params["properties"]["skill_name"]["enum"]
+        assert "data_analysis" in enum
+        assert "test_data_factory" in enum
+
+    def test_to_schema(self):
+        loader = SkillsLoader()
+        tool = ReadSkillTool(loader)
+        schema = tool.to_schema()
+        assert schema["function"]["name"] == "read_skill"
+        assert "skill_name" in schema["function"]["parameters"]["properties"]
+
+    @pytest.mark.asyncio
+    async def test_loads_skill_content(self):
+        loader = SkillsLoader()
+        tool = ReadSkillTool(loader)
+        result = await tool.execute(skill_name="data_analysis")
+        assert "Data Analysis" in result
+        assert "read_file" not in result
+
+    @pytest.mark.asyncio
+    async def test_not_found(self):
+        loader = SkillsLoader()
+        tool = ReadSkillTool(loader)
+        result = await tool.execute(skill_name="nonexistent_skill_xyz")
+        assert "Error" in result
+        assert "not found" in result
+
+    @pytest.mark.asyncio
+    async def test_strips_frontmatter(self):
+        loader = SkillsLoader()
+        tool = ReadSkillTool(loader)
+        result = await tool.execute(skill_name="test_data_factory")
+        assert "Test Data Factory" in result
+        assert "description:" not in result or "Generate semantically" in result
 
 
 # -- SchemaInspectTool --------------------------------------------------------

@@ -4,6 +4,23 @@
 
 ---
 
+## 0.4.8 (2026-02-26)
+
+### 功能
+
+- **`read_skill` 工具**：Agent 现可按需加载 Skill 工作流说明。当用户请求与某 Skill 匹配（如生成测试数据 → test_data_factory）时，Agent 会先调用 `read_skill(skill_name)` 获取完整 SKILL.md 内容，再按工作流执行。
+- **Skills 系统提示修复**：将无效的「read with read_file」提示改为「call read_skill(skill_name='...') when relevant」，Agent 现可正确访问 Skills。
+
+### 变更
+
+- `tools/read_skill.py`：新增 ReadSkillTool；从 SkillsLoader 读取并返回去除 frontmatter 的 SKILL.md 内容。
+- `agent/skills.py`：`build_skills_summary()` 现提示调用 read_skill 而非 read_file。
+- `agent/context.py`：更新 identity 引导语，指导 Agent 在遵循 Skill 工作流前先调用 read_skill。
+- `agent/loop.py`：注册 ReadSkillTool（始终注册，无安全策略依赖）。
+- 设计文档：DESIGN_READ_SKILL_TOOL、FIX_SKILLS_INJECTION。
+
+---
+
 ## 0.4.7 (2026-02-26)
 
 ### 功能

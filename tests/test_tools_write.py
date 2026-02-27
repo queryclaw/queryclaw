@@ -274,6 +274,7 @@ class TestAgentLoopWriteTools:
             db=write_db,
             safety_policy=SafetyPolicy(read_only=False),
         )
+        assert agent.tools.has("read_skill")
         assert agent.tools.has("data_modify")
         assert agent.tools.has("ddl_execute")
         assert agent.tools.has("transaction")
@@ -281,7 +282,7 @@ class TestAgentLoopWriteTools:
         assert agent.tools.has("query_execute")
         assert agent.tools.has("explain_plan")
         assert agent.tools.has("spawn_subagent")
-        assert len(agent.tools) == 7
+        assert len(agent.tools) == 8
 
     async def test_write_tools_not_registered_when_readonly(self, write_db):
         from queryclaw.agent.loop import AgentLoop
@@ -298,7 +299,8 @@ class TestAgentLoopWriteTools:
             db=write_db,
             safety_policy=SafetyPolicy(read_only=True),
         )
+        assert agent.tools.has("read_skill")
         assert not agent.tools.has("data_modify")
         assert not agent.tools.has("ddl_execute")
         assert not agent.tools.has("transaction")
-        assert len(agent.tools) == 4
+        assert len(agent.tools) == 5

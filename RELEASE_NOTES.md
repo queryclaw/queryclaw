@@ -4,6 +4,23 @@
 
 ---
 
+## 0.4.8 (2026-02-26)
+
+### Features
+
+- **`read_skill` tool**: Agent can now load Skill workflow instructions on demand. When the user's request matches a skill (e.g. generate test data → test_data_factory), the agent calls `read_skill(skill_name)` to load the full SKILL.md content before following the workflow.
+- **Skills system prompt fix**: Replaced the broken "read with read_file" instruction with "call read_skill(skill_name='...') when relevant". The agent now has a working path to access Skills.
+
+### Changes
+
+- `tools/read_skill.py`: New ReadSkillTool; reads from SkillsLoader, returns stripped SKILL.md content.
+- `agent/skills.py`: `build_skills_summary()` now instructs to call read_skill instead of read_file.
+- `agent/context.py`: Identity guideline updated to direct agent to call read_skill before following skill workflows.
+- `agent/loop.py`: Register ReadSkillTool (always, no safety dependency).
+- Design docs: DESIGN_READ_SKILL_TOOL, FIX_SKILLS_INJECTION.
+
+---
+
 ## 0.4.7 (2026-02-26)
 
 ### Features

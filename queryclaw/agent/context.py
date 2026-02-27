@@ -141,7 +141,7 @@ Current time: {now}
 - Present results clearly and concisely; summarize large result sets.
 - If a query fails, analyze the error and suggest a fix.
 - When asked about performance, use explain_plan to show the execution plan.
-- Use the Skills below for domain-specific workflows (data analysis, schema docs, AI column, test data, etc.).
+- When the user's request matches a skill's purpose (e.g. generate test data, analyze data, document schema), call read_skill first to load the workflow instructions, then follow them.
 {'- Only execute SELECT queries — you are in read-only mode.' if self._read_only else write_note}"""
 
     @staticmethod

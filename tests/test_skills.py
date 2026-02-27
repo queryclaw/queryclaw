@@ -94,6 +94,8 @@ class TestSkillsLoader:
         loader = SkillsLoader()
         summary = loader.build_skills_summary()
         assert "data_analysis" in summary
+        assert "read_skill" in summary
+        assert "read_file" not in summary
 
     def test_strip_frontmatter(self):
         content = "---\nkey: value\n---\n# Title\nBody"

@@ -100,10 +100,14 @@ class SkillsLoader:
         if not all_skills:
             return ""
 
-        lines = ["Available skills:"]
+        lines = [
+            "Call read_skill(skill_name='<name>') to load full workflow instructions when the user's request matches a skill.",
+            "",
+            "Available skills:",
+        ]
         for s in all_skills:
             desc = self._get_skill_description(s["name"])
-            lines.append(f"  - {s['name']}: {desc} (read with read_file: {s['path']})")
+            lines.append(f"  - {s['name']}: {desc} — call read_skill(skill_name='{s['name']}') when relevant")
         return "\n".join(lines)
 
     def get_skill_metadata(self, name: str) -> dict[str, str] | None:

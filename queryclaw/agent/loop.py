@@ -20,6 +20,7 @@ from queryclaw.safety.audit import AuditLogger
 from queryclaw.safety.policy import SafetyPolicy
 from queryclaw.safety.validator import QueryValidator
 from queryclaw.tools.registry import ToolRegistry
+from queryclaw.tools.read_skill import ReadSkillTool
 from queryclaw.tools.schema import SchemaInspectTool
 from queryclaw.tools.query import QueryExecuteTool
 from queryclaw.tools.explain import ExplainPlanTool
@@ -82,6 +83,7 @@ class AgentLoop:
 
     def _register_default_tools(self, max_query_rows: int, enable_subagent: bool) -> None:
         """Register the built-in database tools."""
+        self.tools.register(ReadSkillTool(self.skills))
         self.tools.register(SchemaInspectTool(self.db))
         self.tools.register(QueryExecuteTool(self.db, max_rows=max_query_rows))
         self.tools.register(ExplainPlanTool(self.db))

@@ -4,6 +4,27 @@
 
 ---
 
+## 0.4.12 (2026-02-27)
+
+### Features
+
+- **Audit before/after snapshots**: The audit table (`_queryclaw_audit_log`) now populates `before_snapshot` and `after_snapshot` for data modifications. For UPDATE: before = old row data, after = new row data. For DELETE: before = deleted rows, after = empty. For INSERT: before = empty, after = inserted values (parsed from VALUES clause). Snapshots are JSON, limited to 100 rows and ~50KB.
+
+### Fixes
+
+- **SeekDB audit compatibility**: SeekDB (OceanBase) uses MySQL protocol but previously fell through to SQLite DDL/placeholders, causing `AUTOINCREMENT` syntax error and "not all arguments converted" in audit. Now SeekDB uses MySQL-style DDL and `%s` placeholders.
+- **SeekDB dialect mapping**: `data_modify` and `ddl_execute` now map SeekDB to MySQL dialect for sqlglot parsing (SeekDB is not a sqlglot dialect).
+
+### Changes
+
+- `queryclaw/safety/snapshot.py`: New SnapshotHelper for before/after row capture.
+- `queryclaw/safety/audit.py`: Treat `seekdb` like `mysql` for table creation and INSERT.
+- `queryclaw/tools/modify.py`: Integrate SnapshotHelper; map seekdb → mysql dialect.
+- `queryclaw/tools/ddl.py`: Map seekdb → mysql dialect.
+- Tests: `test_audit_snapshots_populated` for UPDATE/DELETE/INSERT snapshot verification.
+
+---
+
 ## 0.4.11 (2026-02-26)
 
 ### Features

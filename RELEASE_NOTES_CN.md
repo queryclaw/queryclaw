@@ -4,6 +4,27 @@
 
 ---
 
+## 0.4.12 (2026-02-27)
+
+### 功能
+
+- **审计前后快照**：审计表 `_queryclaw_audit_log` 现会填充 `before_snapshot` 和 `after_snapshot`。UPDATE：before = 修改前行，after = 修改后行。DELETE：before = 被删行，after = 空。INSERT：before = 空，after = 插入值（从 VALUES 解析）。快照为 JSON，最多 100 行、约 50KB。
+
+### 修复
+
+- **SeekDB 审计兼容**：SeekDB（OceanBase）使用 MySQL 协议，此前误用 SQLite DDL/占位符，导致 `AUTOINCREMENT` 语法错误及「not all arguments converted」。现 SeekDB 使用 MySQL 风格 DDL 和 `%s` 占位符。
+- **SeekDB dialect 映射**：`data_modify` 与 `ddl_execute` 现把 SeekDB 映射为 MySQL dialect 供 sqlglot 解析。
+
+### 变更
+
+- `queryclaw/safety/snapshot.py`：新增 SnapshotHelper 用于前后行快照采集。
+- `queryclaw/safety/audit.py`：将 `seekdb` 按 `mysql` 处理建表与 INSERT。
+- `queryclaw/tools/modify.py`：集成 SnapshotHelper；seekdb → mysql dialect 映射。
+- `queryclaw/tools/ddl.py`：seekdb → mysql dialect 映射。
+- 测试：`test_audit_snapshots_populated` 验证 UPDATE/DELETE/INSERT 快照。
+
+---
+
 ## 0.4.11 (2026-02-26)
 
 ### 功能

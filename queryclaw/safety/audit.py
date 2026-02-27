@@ -99,7 +99,8 @@ class AuditLogger:
         db_type = self._db.db_type
         if db_type == "sqlite":
             ddl = _CREATE_AUDIT_TABLE_SQLITE
-        elif db_type == "mysql":
+        elif db_type in ("mysql", "seekdb"):
+            # SeekDB is MySQL protocol compatible (OceanBase)
             ddl = _CREATE_AUDIT_TABLE_MYSQL
         elif db_type == "postgresql":
             ddl = _CREATE_AUDIT_TABLE_PG
@@ -140,8 +141,8 @@ class AuditLogger:
                     meta_json,
                 ),
             )
-        elif db_type == "mysql":
-            # MySQL uses logged_at (avoids reserved word "timestamp") and %s placeholders
+        elif db_type in ("mysql", "seekdb"):
+            # MySQL/SeekDB use logged_at (avoids reserved word "timestamp") and %s placeholders
             placeholder = "%s"
             sql = (
                 f"INSERT INTO {AUDIT_TABLE} "

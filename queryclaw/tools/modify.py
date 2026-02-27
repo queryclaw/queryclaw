@@ -9,6 +9,7 @@ from queryclaw.db.base import SQLAdapter
 from queryclaw.safety.audit import AuditEntry, AuditLogger
 from queryclaw.safety.dry_run import DryRunEngine
 from queryclaw.safety.policy import SafetyPolicy
+from queryclaw.safety.snapshot import SnapshotHelper
 from queryclaw.safety.validator import QueryValidator
 from queryclaw.tools.base import Tool
 
@@ -34,6 +35,7 @@ class DataModifyTool(Tool):
         self._validator = validator or QueryValidator(blocked_patterns=policy.blocked_patterns)
         self._dry_run = DryRunEngine(db)
         self._audit = audit or AuditLogger(db)
+        self._snapshot = SnapshotHelper(db)
         self._confirm = confirmation_callback
 
     @property
@@ -72,7 +74,12 @@ class DataModifyTool(Tool):
         if not any(upper.startswith(p) for p in ("INSERT", "UPDATE", "DELETE")):
             return "Error: data_modify only accepts INSERT, UPDATE, or DELETE statements. Use ddl_execute for DDL."
 
-        dialect = self._db.db_type if self._db.db_type != "postgresql" else "postgres"
+        # Map db_type to sqlglot dialect (seekdb is MySQL-compatible)
+        dialect = (
+            "postgres" if self._db.db_type == "postgresql"
+            else "mysql" if self._db.db_type in ("mysql", "seekdb")
+            else self._db.db_type
+        )
         validation = self._validator.validate(sql_stripped, dialect=dialect)
         if not validation.allowed:
             return f"Error: SQL blocked by safety policy. {'; '.join(validation.warnings)}"
@@ -114,9 +121,28 @@ class DataModifyTool(Tool):
 
         start = time.monotonic()
         status = "success"
+        before_snapshot = ""
+        after_snapshot = ""
+        before_select_sql: str | None = None
+
         try:
             await self._db.begin_transaction()
+
+            # Capture before snapshot (for UPDATE/DELETE) within transaction
+            if self._policy.audit_enabled:
+                before_snapshot = await self._snapshot.get_before_snapshot(sql_stripped)
+                before_select_sql = self._snapshot.get_before_select_sql(sql_stripped)
+
             result = await self._db.execute(sql_stripped)
+
+            # Capture after snapshot (for UPDATE: re-run SELECT; for INSERT: parse values)
+            if self._policy.audit_enabled:
+                after_snapshot = await self._snapshot.get_after_snapshot(
+                    sql_stripped,
+                    validation.operation_type,
+                    before_select_sql,
+                )
+
             await self._db.commit()
             elapsed = (time.monotonic() - start) * 1000
         except Exception as e:
@@ -140,6 +166,8 @@ class DataModifyTool(Tool):
                         status=status,
                         execution_time_ms=round(elapsed, 2),
                         metadata={"error": str(e)},
+                        before_snapshot=before_snapshot,
+                        after_snapshot=after_snapshot,
                     ))
             except Exception:
                 pass
@@ -152,6 +180,8 @@ class DataModifyTool(Tool):
                 affected_rows=result.affected_rows,
                 execution_time_ms=round(elapsed, 2),
                 status=status,
+                before_snapshot=before_snapshot,
+                after_snapshot=after_snapshot,
             ))
 
         return (

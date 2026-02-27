@@ -72,7 +72,12 @@ class DDLExecuteTool(Tool):
         if not any(upper.startswith(p) for p in ("CREATE", "ALTER", "DROP", "TRUNCATE")):
             return "Error: ddl_execute only accepts DDL statements (CREATE, ALTER, DROP, TRUNCATE). Use data_modify for DML."
 
-        dialect = self._db.db_type if self._db.db_type != "postgresql" else "postgres"
+        # Map db_type to sqlglot dialect (seekdb is MySQL-compatible)
+        dialect = (
+            "postgres" if self._db.db_type == "postgresql"
+            else "mysql" if self._db.db_type in ("mysql", "seekdb")
+            else self._db.db_type
+        )
         validation = self._validator.validate(sql_stripped, dialect=dialect)
         if not validation.allowed:
             return f"Error: SQL blocked by safety policy. {'; '.join(validation.warnings)}"

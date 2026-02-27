@@ -100,6 +100,45 @@ class TestDataModifyTool:
         rows = await write_db.execute(f"SELECT * FROM {AUDIT_TABLE}")
         assert rows.row_count >= 1
 
+    async def test_audit_snapshots_populated(self, write_db):
+        """Verify before_snapshot and after_snapshot are populated for UPDATE/DELETE/INSERT."""
+        audit = AuditLogger(write_db)
+        tool = DataModifyTool(write_db, _write_policy(), audit=audit)
+
+        # UPDATE: before=old row, after=new row
+        await tool.execute(sql="UPDATE users SET name = 'Alicia' WHERE id = 1")
+        rows = await write_db.execute(
+            f"SELECT before_snapshot, after_snapshot, operation_type FROM {AUDIT_TABLE} "
+            "ORDER BY id DESC LIMIT 1"
+        )
+        assert rows.row_count == 1
+        before, after, op = rows.rows[0]
+        assert op == "update"
+        assert "Alice" in (before or "")
+        assert "Alicia" in (after or "")
+
+        # DELETE: before=deleted row, after=empty
+        await tool.execute(sql="DELETE FROM users WHERE id = 2")
+        rows = await write_db.execute(
+            f"SELECT before_snapshot, after_snapshot, operation_type FROM {AUDIT_TABLE} "
+            "ORDER BY id DESC LIMIT 1"
+        )
+        before, after, op = rows.rows[0]
+        assert op == "delete"
+        assert "Bob" in (before or "")
+        assert after == "" or after == "[]"
+
+        # INSERT: before=empty, after=inserted values
+        await tool.execute(sql="INSERT INTO users VALUES (99, 'NewUser', 'new@test.com')")
+        rows = await write_db.execute(
+            f"SELECT before_snapshot, after_snapshot, operation_type FROM {AUDIT_TABLE} "
+            "ORDER BY id DESC LIMIT 1"
+        )
+        before, after, op = rows.rows[0]
+        assert op == "insert"
+        assert before == "" or before == "[]"
+        assert "NewUser" in (after or "") or "99" in (after or "")
+
     async def test_audit_skipped_when_disabled(self, write_db):
         """When audit_enabled=False, no audit entry is written."""
         audit = AuditLogger(write_db)

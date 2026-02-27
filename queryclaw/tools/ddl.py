@@ -103,7 +103,10 @@ class DDLExecuteTool(Tool):
                     sql_text=sql_stripped,
                     status="rejected",
                 ))
-                return "Operation cancelled by user."
+                return (
+                    "Operation cancelled by user. Do NOT retry this operation. "
+                    "Inform the user that the operation was declined and suggest alternatives if needed."
+                )
 
         start = time.monotonic()
         try:

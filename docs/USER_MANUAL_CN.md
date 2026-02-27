@@ -1,6 +1,6 @@
 # QueryClaw 用户手册
 
-**版本 0.1.x** — 只读数据库 Agent（Phase 1 MVP）
+**版本 0.2.x** — 带安全层、PostgreSQL 支持和子代理系统的数据库 Agent
 
 本文介绍如何安装、配置和使用 QueryClaw，通过自然语言与数据库对话。
 
@@ -25,11 +25,13 @@
 
 QueryClaw 是一个 **AI 原生数据库 Agent**，可以用自然语言向数据库提问。Agent 使用 **ReACT 循环**（推理 + 行动）：查看表结构、执行只读 SQL、查看执行计划，均通过自然语言完成。
 
-**当前版本（Phase 1）** 支持：
+**当前版本（0.2.x）** 支持：
 
-- **数据库：** SQLite、MySQL  
+- **数据库：** SQLite、MySQL、PostgreSQL  
 - **LLM 提供方：** OpenRouter、Anthropic、OpenAI、DeepSeek、Gemini、DashScope、Moonshot（通过 [LiteLLM](https://github.com/BerriAI/litellm)）  
-- **工具：** 结构查看、只读查询执行、EXPLAIN 计划  
+- **工具：** 结构查看、只读查询执行、EXPLAIN 计划、子代理委派  
+- **安全层：** 策略引擎、SQL AST 校验器、试跑引擎、审计日志  
+- **技能：** 数据分析、Schema 文档生成、查询翻译器、数据侦探  
 - **CLI：** `onboard`（创建配置）、`chat`（交互或单轮对话）
 
 ---
@@ -48,10 +50,22 @@ QueryClaw 是一个 **AI 原生数据库 Agent**，可以用自然语言向数�
 pip install queryclaw
 ```
 
+安装 PostgreSQL 支持：
+
+```bash
+pip install queryclaw[postgresql]
+```
+
+安装所有可选功能：
+
+```bash
+pip install queryclaw[all]
+```
+
 安装指定版本：
 
 ```bash
-pip install queryclaw==0.1.1
+pip install queryclaw==0.2.0
 ```
 
 验证：
@@ -105,9 +119,10 @@ queryclaw --version
 
 | 节点       | 说明 |
 |------------|------|
-| `database` | 要连接的数据库（SQLite/MySQL）的连接信息。 |
+| `database` | 要连接的数据库（SQLite/MySQL/PostgreSQL）的连接信息。 |
 | `providers`| 各 LLM 提供方的 API Key 及可选 base URL。 |
 | `agent`    | 模型名、迭代次数、温度、最大 token 等。 |
+| `safety`   | 安全策略：只读模式、行数限制、确认规则、审计。 |
 
 ### 数据库 (database)
 
@@ -138,6 +153,19 @@ queryclaw --version
   "port": 3306,
   "database": "mydb",
   "user": "myuser",
+  "password": "mypass"
+}
+```
+
+**PostgreSQL 示例：**
+
+```json
+"database": {
+  "type": "postgresql",
+  "host": "localhost",
+  "port": 5432,
+  "database": "mydb",
+  "user": "postgres",
   "password": "mypass"
 }
 ```
@@ -191,6 +219,30 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 | `max_iterations` | int    | `30`                             | 每轮最大 ReACT 步数。 |
 | `temperature`    | float  | `0.1`                            | LLM 采样温度。 |
 | `max_tokens`     | int    | `4096`                           | 单次回复最大 token 数。 |
+
+### 安全 (safety)
+
+| 字段                  | 类型       | 默认值                           | 说明 |
+|----------------------|------------|----------------------------------|------|
+| `read_only`          | bool       | `true`                           | 为 true 时禁止写操作。 |
+| `max_affected_rows`  | int        | `1000`                           | 超过此行数需人工确认。 |
+| `require_confirmation` | bool     | `true`                           | 破坏性操作是否需要人工确认。 |
+| `allowed_tables`     | list/null  | `null`                           | 设定后只允许修改这些表，`null` 表示全部。 |
+| `blocked_patterns`   | list       | `["DROP DATABASE", "DROP SCHEMA"]` | 始终拒绝的 SQL 模式。 |
+| `audit_enabled`      | bool       | `true`                           | 将所有操作写入审计日志表。 |
+
+**示例：**
+
+```json
+"safety": {
+  "read_only": true,
+  "max_affected_rows": 1000,
+  "require_confirmation": true,
+  "allowed_tables": null,
+  "blocked_patterns": ["DROP DATABASE", "DROP SCHEMA"],
+  "audit_enabled": true
+}
+```
 
 ---
 
@@ -256,13 +308,14 @@ queryclaw chat -c /path/to/config.json
 
 Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用。
 
-| 工具               | 说明 |
-|--------------------|------|
-| **schema_inspect** | 列出表；查看指定表的列、索引、外键。 |
-| **query_execute**  | 执行 **只读** SQL（仅 SELECT），结果行数有限制。 |
-| **explain_plan**   | 对给定 SQL 显示执行计划（EXPLAIN）。 |
+| 工具                 | 说明 |
+|---------------------|------|
+| **schema_inspect**  | 列出表；查看指定表的列、索引、外键。 |
+| **query_execute**   | 执行 **只读** SQL（仅 SELECT），结果行数有限制。 |
+| **explain_plan**    | 对给定 SQL 显示执行计划（EXPLAIN）。 |
+| **spawn_subagent**  | 生成专注子代理来处理特定子任务（如多表分析）。 |
 
-Phase 1 为 **只读**：不支持 INSERT/UPDATE/DELETE 或 DDL。
+当前默认安全模式为 **只读**：不支持 INSERT/UPDATE/DELETE 或 DDL。
 
 ---
 
@@ -270,9 +323,14 @@ Phase 1 为 **只读**：不支持 INSERT/UPDATE/DELETE 或 DDL。
 
 技能用于在特定类型任务上引导 Agent 行为，通过 `SKILL.md` 文件加载（如安装包内的 `queryclaw/skills/` 目录）。
 
-**Phase 1 内置技能：**
+**内置技能：**
 
-- **Data Analysis（数据分析）** — 引导 Agent 查看结构、执行 SELECT、汇总数据并报告规律或异常。
+| 技能 | 说明 |
+|------|------|
+| **Data Analysis（数据分析）** | 查看结构、执行 SELECT、汇总数据并报告规律或异常。 |
+| **Schema Documenter（文档生成）** | 为数据库 schema 生成全面文档，含关系映射。 |
+| **Query Translator（查询翻译）** | 在不同数据库方言间翻译 SQL（MySQL、PostgreSQL、SQLite）。 |
+| **Data Detective（数据侦探）** | 检测数据质量问题、异常、重复记录和引用完整性问题。 |
 
 自定义技能可将 `SKILL.md` 放到对应技能目录，格式与路线图见架构与技能文档。
 
@@ -293,7 +351,8 @@ Phase 1 为 **只读**：不支持 INSERT/UPDATE/DELETE 或 DDL。
 ### 数据库连接失败
 
 - **SQLite：** 确认 `database.database` 为存在的 `.db` 文件完整路径，且当前用户有读权限。  
-- **MySQL：** 检查 `host`、`port`、`database`、`user`、`password`；确认 MySQL 允许当前主机连接，且该用户具备 SELECT 及元数据查询权限。
+- **MySQL：** 检查 `host`、`port`、`database`、`user`、`password`；确认 MySQL 允许当前主机连接，且该用户具备 SELECT 及元数据查询权限。  
+- **PostgreSQL：** 检查 `host`、`port`、`database`、`user`、`password`；默认端口为 `5432`。需确保已安装 `asyncpg`（`pip install queryclaw[postgresql]`）。
 
 ### 用错提供方或模型
 

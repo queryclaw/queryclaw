@@ -1,6 +1,6 @@
 # QueryClaw User Manual
 
-**Version 0.1.x** — Read-only database agent (Phase 1 MVP)
+**Version 0.2.x** — Database agent with safety layer, PostgreSQL support, and subagent system
 
 This manual describes how to install, configure, and use QueryClaw to chat with your database in natural language.
 
@@ -25,11 +25,13 @@ This manual describes how to install, configure, and use QueryClaw to chat with 
 
 QueryClaw is an **AI-native database agent** that lets you ask questions about your database in plain language. The agent uses a **ReACT loop** (Reasoning + Acting): it inspects the schema, runs read-only SQL, and explains execution plans — all through natural language.
 
-**Current version (Phase 1)** supports:
+**Current version (0.2.x)** supports:
 
-- **Databases:** SQLite, MySQL  
+- **Databases:** SQLite, MySQL, PostgreSQL  
 - **LLM providers:** OpenRouter, Anthropic, OpenAI, DeepSeek, Gemini, DashScope, Moonshot (via [LiteLLM](https://github.com/BerriAI/litellm))  
-- **Tools:** Schema inspection, read-only query execution, EXPLAIN plan  
+- **Tools:** Schema inspection, read-only query execution, EXPLAIN plan, subagent spawning  
+- **Safety layer:** Policy engine, SQL AST validator, dry-run engine, audit logger  
+- **Skills:** Data Analysis, Schema Documenter, Query Translator, Data Detective  
 - **CLI:** `onboard` (create config), `chat` (interactive or single-turn)
 
 ---
@@ -48,10 +50,22 @@ QueryClaw is an **AI-native database agent** that lets you ask questions about y
 pip install queryclaw
 ```
 
+For PostgreSQL support:
+
+```bash
+pip install queryclaw[postgresql]
+```
+
+For all optional features:
+
+```bash
+pip install queryclaw[all]
+```
+
 To install a specific version:
 
 ```bash
-pip install queryclaw==0.1.1
+pip install queryclaw==0.2.0
 ```
 
 Verify:
@@ -108,6 +122,7 @@ Configuration is stored in **JSON** at `~/.queryclaw/config.json` by default. Yo
 | `database` | Connection settings for the database QueryClaw will query. |
 | `providers` | API keys and optional base URLs for each LLM provider. |
 | `agent` | Model name, iteration limit, temperature, and token limit. |
+| `safety` | Safety policy: read-only mode, row limits, confirmation rules, audit. |
 
 ### Database
 
@@ -252,17 +267,44 @@ Output is rendered as **Markdown** by default; use `--no-markdown` for plain tex
 
 ---
 
+### Safety
+
+| Field                | Type       | Default                        | Description |
+|----------------------|------------|--------------------------------|-------------|
+| `read_only`          | bool       | `true`                         | When true, write operations are blocked. |
+| `max_affected_rows`  | int        | `1000`                         | Threshold above which confirmation is required. |
+| `require_confirmation` | bool     | `true`                         | Require human confirmation for destructive operations. |
+| `allowed_tables`     | list/null  | `null`                         | If set, only these tables can be modified. `null` means all. |
+| `blocked_patterns`   | list       | `["DROP DATABASE", "DROP SCHEMA"]` | SQL patterns that are always rejected. |
+| `audit_enabled`      | bool       | `true`                         | Write all operations to the audit log table. |
+
+**Example:**
+
+```json
+"safety": {
+  "read_only": true,
+  "max_affected_rows": 1000,
+  "require_confirmation": true,
+  "allowed_tables": null,
+  "blocked_patterns": ["DROP DATABASE", "DROP SCHEMA"],
+  "audit_enabled": true
+}
+```
+
+---
+
 ## Built-in Tools
 
 The agent uses these tools automatically during the ReACT loop. You do not call them directly.
 
-| Tool              | Description |
-|-------------------|-------------|
-| **schema_inspect**| List tables; describe columns, indexes, and foreign keys for a table. |
-| **query_execute** | Run **read-only** SQL (SELECT only). Results are limited to avoid huge outputs. |
-| **explain_plan**  | Show the execution plan (EXPLAIN) for a given SQL query. |
+| Tool                | Description |
+|---------------------|-------------|
+| **schema_inspect**  | List tables; describe columns, indexes, and foreign keys for a table. |
+| **query_execute**   | Run **read-only** SQL (SELECT only). Results are limited to avoid huge outputs. |
+| **explain_plan**    | Show the execution plan (EXPLAIN) for a given SQL query. |
+| **spawn_subagent**  | Spawn a focused subagent to handle a specific subtask (e.g. multi-table analysis). |
 
-Phase 1 is **read-only**: no INSERT/UPDATE/DELETE or DDL.
+The current default safety mode is **read-only**: no INSERT/UPDATE/DELETE or DDL.
 
 ---
 
@@ -270,9 +312,14 @@ Phase 1 is **read-only**: no INSERT/UPDATE/DELETE or DDL.
 
 Skills guide the agent’s behavior for certain kinds of tasks. They are loaded from `SKILL.md` files (e.g. inside the installed package under `queryclaw/skills/`).
 
-**Built-in skill (Phase 1):**
+**Built-in skills:**
 
-- **Data Analysis** — Instructs the agent to explore schema, run SELECTs, summarize data, and report patterns or anomalies.
+| Skill | Description |
+|-------|-------------|
+| **Data Analysis** | Explore schema, run SELECTs, summarize data, report patterns or anomalies. |
+| **Schema Documenter** | Generate comprehensive documentation for database schema with relationship mapping. |
+| **Query Translator** | Translate SQL queries between different database dialects (MySQL, PostgreSQL, SQLite). |
+| **Data Detective** | Detect data quality issues, anomalies, duplicate records, and referential integrity problems. |
 
 Custom skills can be added by placing `SKILL.md` in the appropriate skills directory; see the architecture and skills roadmap docs for format and roadmap.
 
@@ -293,7 +340,8 @@ Custom skills can be added by placing `SKILL.md` in the appropriate skills direc
 ### Database connection errors
 
 - **SQLite:** Ensure `database.database` is the full path to an existing `.db` file and that the process has read permission.  
-- **MySQL:** Check `host`, `port`, `database`, `user`, `password`. Ensure the MySQL server allows connections from your host and that the user has SELECT (and schema) privileges.
+- **MySQL:** Check `host`, `port`, `database`, `user`, `password`. Ensure the MySQL server allows connections from your host and that the user has SELECT (and schema) privileges.  
+- **PostgreSQL:** Check `host`, `port`, `database`, `user`, `password`. Default port is `5432`. Ensure `asyncpg` is installed (`pip install queryclaw[postgresql]`).
 
 ### Wrong provider or model
 

@@ -74,6 +74,7 @@ class TestAdapterRegistry:
         types = AdapterRegistry.available_types()
         assert "sqlite" in types
         assert "mysql" in types
+        assert "postgresql" in types
 
     def test_create_sqlite(self):
         adapter = AdapterRegistry.create("sqlite")
@@ -83,12 +84,17 @@ class TestAdapterRegistry:
         adapter = AdapterRegistry.create("mysql")
         assert adapter.db_type == "mysql"
 
+    def test_create_postgresql(self):
+        adapter = AdapterRegistry.create("postgresql")
+        assert adapter.db_type == "postgresql"
+
     def test_create_unknown_raises(self):
         with pytest.raises(ValueError, match="Unsupported database type"):
             AdapterRegistry.create("oracle")
 
     def test_get(self):
         assert AdapterRegistry.get("sqlite") is not None
+        assert AdapterRegistry.get("postgresql") is not None
         assert AdapterRegistry.get("oracle") is None
 
 

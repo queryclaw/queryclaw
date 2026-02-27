@@ -17,12 +17,26 @@ class Base(BaseModel):
 class DatabaseConfig(Base):
     """Database connection configuration."""
 
-    type: Literal["mysql", "sqlite"] = "sqlite"
+    type: Literal["mysql", "sqlite", "postgresql"] = "sqlite"
     host: str = "localhost"
     port: int = 3306
     database: str = ""
     user: str = ""
     password: str = ""
+
+
+class SafetyConfig(Base):
+    """Safety layer configuration."""
+
+    read_only: bool = True
+    max_affected_rows: int = 1000
+    require_confirmation: bool = True
+    allowed_tables: list[str] | None = None
+    blocked_patterns: list[str] = Field(default_factory=lambda: [
+        "DROP DATABASE",
+        "DROP SCHEMA",
+    ])
+    audit_enabled: bool = True
 
 
 class ProviderConfig(Base):
@@ -61,6 +75,7 @@ class Config(BaseSettings):
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     agent: AgentConfig = Field(default_factory=AgentConfig)
+    safety: SafetyConfig = Field(default_factory=SafetyConfig)
 
     model_config = ConfigDict(env_prefix="QUERYCLAW_", env_nested_delimiter="__")
 

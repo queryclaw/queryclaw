@@ -10,8 +10,10 @@ from loguru import logger
 from queryclaw.agent.context import ContextBuilder
 from queryclaw.agent.memory import MemoryStore
 from queryclaw.agent.skills import SkillsLoader
+from queryclaw.agent.subagent import SubAgentSpawner, SpawnSubAgentTool
 from queryclaw.db.base import SQLAdapter
 from queryclaw.providers.base import LLMProvider
+from queryclaw.safety.policy import SafetyPolicy
 from queryclaw.tools.registry import ToolRegistry
 from queryclaw.tools.schema import SchemaInspectTool
 from queryclaw.tools.query import QueryExecuteTool
@@ -38,6 +40,8 @@ class AgentLoop:
         temperature: float = 0.1,
         max_tokens: int = 4096,
         max_query_rows: int = 100,
+        safety_policy: SafetyPolicy | None = None,
+        enable_subagent: bool = True,
     ) -> None:
         self.provider = provider
         self.db = db
@@ -45,19 +49,23 @@ class AgentLoop:
         self.max_iterations = max_iterations
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.safety_policy = safety_policy or SafetyPolicy()
 
         self.tools = ToolRegistry()
         self.skills = SkillsLoader()
         self.context = ContextBuilder(db, self.skills)
         self.memory = MemoryStore()
+        self.subagent_spawner = SubAgentSpawner(provider, db, model=self.model)
 
-        self._register_default_tools(max_query_rows)
+        self._register_default_tools(max_query_rows, enable_subagent)
 
-    def _register_default_tools(self, max_query_rows: int) -> None:
+    def _register_default_tools(self, max_query_rows: int, enable_subagent: bool) -> None:
         """Register the built-in database tools."""
         self.tools.register(SchemaInspectTool(self.db))
         self.tools.register(QueryExecuteTool(self.db, max_rows=max_query_rows))
         self.tools.register(ExplainPlanTool(self.db))
+        if enable_subagent:
+            self.tools.register(SpawnSubAgentTool(self.subagent_spawner))
 
     async def chat(self, user_message: str) -> str:
         """Process a user message and return the agent's response.

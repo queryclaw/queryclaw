@@ -106,7 +106,7 @@ QueryClaw 的每一个操作都会记录到所管理数据库中的一张专用�
 
 这不只是日志——这是一份完整的**安全审计记录**，合规团队、DBA 和开发者都可以用标准 SQL 来查询。因为它就存在数据库里，所以始终可用、始终可查，并且享有与你的业务数据相同的 ACID 保障。
 
-## 内置技能（规划中）
+## 内置技能
 
 QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领域工作流：
 
@@ -127,7 +127,7 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 
 ## 路线图
 
-### 阶段一：MVP —— 只读 Agent *（当前）*
+### 阶段一：MVP —— 只读 Agent *（已完成）*
 
 - 交互式 CLI（typer + prompt_toolkit）
 - ReACT Agent 循环
@@ -137,14 +137,18 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 - 配置系统
 - 基础技能加载
 
-### 阶段二：写操作与安全
+### 阶段二：写操作与安全 *（进行中）*
 
-- 写入工具：`data_modify`、`ddl_execute`、`transaction`
-- 安全层：SQL 校验器、试跑引擎、审计日志
-- 破坏性操作人机确认
-- PostgreSQL 适配器
-- 后台子代理（长时间任务）
-- 首批技能：AI 列、测试数据工厂、数据侦探、Schema 文档生成
+- **已完成（批次 A+B）：**
+  - PostgreSQL 适配器（asyncpg）
+  - 安全层：策略引擎、SQL AST 校验器、试跑引擎、审计日志
+  - 子代理系统：`spawn_subagent` 工具，用于委派任务
+  - 只读技能：Schema 文档生成、查询翻译器、数据侦探
+  - 配置系统新增 `SafetyConfig`
+- **待完成（批次 C+D）：**
+  - 写入工具：`data_modify`、`ddl_execute`、`transaction`
+  - 破坏性操作人机确认流程
+  - 写操作技能：AI 列、测试数据工厂
 
 ### 阶段三：高级技能与记忆
 
@@ -180,6 +184,18 @@ QueryClaw 的真正威力来自技能系统。每个技能教会 Agent 一套领
 
 ```bash
 pip install queryclaw
+```
+
+安装 PostgreSQL 支持：
+
+```bash
+pip install queryclaw[postgresql]
+```
+
+安装所有可选功能（PostgreSQL + SQL 校验）：
+
+```bash
+pip install queryclaw[all]
 ```
 
 ## 文档

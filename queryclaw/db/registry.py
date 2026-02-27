@@ -64,9 +64,11 @@ def _register_defaults() -> None:
     """Register built-in adapters."""
     from queryclaw.db.mysql import MySQLAdapter
     from queryclaw.db.sqlite import SQLiteAdapter
+    from queryclaw.db.postgresql import PostgreSQLAdapter
 
     AdapterRegistry.register("mysql", MySQLAdapter)
     AdapterRegistry.register("sqlite", SQLiteAdapter)
+    AdapterRegistry.register("postgresql", PostgreSQLAdapter)
 
 
 _register_defaults()

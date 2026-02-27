@@ -1,6 +1,6 @@
 [project]
 name = "queryclaw"
-version = "0.1.2"
+version = "0.2.0"
 description = "AI-Native Database Agent for Safe & Autonomous Operations — Text-to-SQL with safety guardrails"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,9 +29,21 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+postgresql = [
+    "asyncpg>=0.29",
+]
+safety = [
+    "sqlglot>=20.0",
+]
+all = [
+    "asyncpg>=0.29",
+    "sqlglot>=20.0",
+]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21",
+    "asyncpg>=0.29",
+    "sqlglot>=20.0",
 ]
 
 [project.scripts]

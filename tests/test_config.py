@@ -11,6 +11,7 @@ from queryclaw.config.schema import (
     DatabaseConfig,
     ProviderConfig,
     ProvidersConfig,
+    SafetyConfig,
 )
 from queryclaw.config.loader import load_config, save_config
 
@@ -33,6 +34,11 @@ class TestDatabaseConfig:
         assert cfg.type == "mysql"
         assert cfg.host == "db.example.com"
         assert cfg.port == 3307
+
+    def test_postgresql_type(self):
+        cfg = DatabaseConfig(type="postgresql", host="pg.local", port=5432)
+        assert cfg.type == "postgresql"
+        assert cfg.port == 5432
 
     def test_invalid_type_rejected(self):
         with pytest.raises(Exception):
@@ -61,12 +67,28 @@ class TestAgentConfig:
         assert cfg.max_tokens == 4096
 
 
+class TestSafetyConfig:
+    def test_defaults(self):
+        cfg = SafetyConfig()
+        assert cfg.read_only is True
+        assert cfg.max_affected_rows == 1000
+        assert cfg.require_confirmation is True
+        assert cfg.audit_enabled is True
+
+    def test_custom(self):
+        cfg = SafetyConfig(read_only=False, max_affected_rows=500)
+        assert cfg.read_only is False
+        assert cfg.max_affected_rows == 500
+
+
 class TestConfig:
     def test_defaults(self):
         cfg = Config()
         assert cfg.database.type == "sqlite"
         assert cfg.agent.max_iterations == 30
         assert isinstance(cfg.providers, ProvidersConfig)
+        assert isinstance(cfg.safety, SafetyConfig)
+        assert cfg.safety.read_only is True
 
     def test_get_provider_no_keys(self):
         cfg = Config()

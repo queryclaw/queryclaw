@@ -268,6 +268,16 @@ class TestAgentLoop:
         assert agent.tools.has("schema_inspect")
         assert agent.tools.has("query_execute")
         assert agent.tools.has("explain_plan")
+        assert agent.tools.has("spawn_subagent")
+        assert len(agent.tools) == 4
+
+    async def test_tool_names_without_subagent(self, agent_db):
+        provider = MockProvider([LLMResponse(content="ok")])
+        agent = AgentLoop(provider=provider, db=agent_db, enable_subagent=False)
+        assert agent.tools.has("schema_inspect")
+        assert agent.tools.has("query_execute")
+        assert agent.tools.has("explain_plan")
+        assert not agent.tools.has("spawn_subagent")
         assert len(agent.tools) == 3
 
     async def test_explain_tool_integration(self, agent_db):

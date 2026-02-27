@@ -106,7 +106,7 @@ Every action QueryClaw takes is recorded in a dedicated audit table within the m
 
 This is not just logging — it's a full **security audit trail** that compliance teams, DBAs, and developers can query using standard SQL. Since it lives in the database itself, it's always available, always queryable, and backed by the same ACID guarantees as your data.
 
-## Built-in Skills (Planned)
+## Built-in Skills
 
 QueryClaw's real power comes from its skill system. Each skill teaches the Agent a domain-specific workflow:
 
@@ -127,7 +127,7 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 
 ## Roadmap
 
-### Phase 1: MVP — Read-Only Agent *(current)*
+### Phase 1: MVP — Read-Only Agent *(completed)*
 
 - Interactive CLI (typer + prompt_toolkit)
 - ReACT agent loop
@@ -137,14 +137,18 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 - Configuration system
 - Basic skill loading
 
-### Phase 2: Write Operations + Safety
+### Phase 2: Write Operations + Safety *(in progress)*
 
-- Write tools: `data_modify`, `ddl_execute`, `transaction`
-- Safety layer: SQL validator, dry-run engine, audit logger
-- Human-in-the-loop confirmation
-- PostgreSQL adapter
-- Background subagent for long-running tasks
-- First skills: AI Column, Test Data Factory, Data Detective, Schema Documenter
+- **Done (Batch A+B):**
+  - PostgreSQL adapter (asyncpg)
+  - Safety layer: policy engine, SQL AST validator, dry-run engine, audit logger
+  - Subagent system: `spawn_subagent` tool for delegated tasks
+  - Read-only skills: Schema Documenter, Query Translator, Data Detective
+  - `SafetyConfig` in configuration system
+- **Upcoming (Batch C+D):**
+  - Write tools: `data_modify`, `ddl_execute`, `transaction`
+  - Human-in-the-loop confirmation flow
+  - Write skills: AI Column, Test Data Factory
 
 ### Phase 3: Advanced Skills + Memory
 
@@ -180,6 +184,18 @@ Combining with vector stores and AI-native databases unlocks new capabilities:
 
 ```bash
 pip install queryclaw
+```
+
+For PostgreSQL support:
+
+```bash
+pip install queryclaw[postgresql]
+```
+
+For all optional features (PostgreSQL + SQL validation):
+
+```bash
+pip install queryclaw[all]
 ```
 
 ## Documentation

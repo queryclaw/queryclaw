@@ -70,10 +70,10 @@ QueryClaw uses a **ReACT (Reasoning + Acting) loop** powered by LLMs, with a mod
                     │  Validate → Dry-Run → Audit │
                     └──────────────┬──────────────┘
                                    │
-                    ┌───────────────────▼───────────────────┐
-                    │         Database Adapters              │
-                    │ MySQL │ SQLite │ PostgreSQL │ SeekDB   │
-                    └───────────────────────────────────────┘
+                    ┌──────────────▼──────────────┐
+                    │     Database Adapters       │
+                    │  MySQL│SQLite│PG│SeekDB   │
+                    └─────────────────────────────┘
 ```
 
 **Key design choices:**

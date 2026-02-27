@@ -267,6 +267,23 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 | `client_secret`  | string | AppSecret。 |
 | `allow_from`     | list   | 允许的 staff_id 列表；空表示全部允许。 |
 
+**飞书通道对接指南：**
+
+飞书通道使用 **WebSocket 长连接**，无需公网 IP 或域名，只需本地能访问飞书 API。
+
+1. **创建应用**：在 [飞书开放平台](https://open.feishu.cn/app) 创建企业自建应用。
+2. **获取凭证**：在「凭证与基础信息」中获取 `App ID` 和 `App Secret`。
+3. **启用机器人**：在「功能」→「机器人」中启用机器人能力。
+4. **配置权限**：在「权限管理」中增加：
+   - `im:message` 相关：接收消息、发送消息、群组内发送消息。
+   - `im:message.group_at_msg`：接收群聊中 @ 机器人的消息。
+5. **事件订阅**：在「事件与回调」中，选择 **「使用长连接接收事件」** 并保存。
+   - 需先发布应用并运行 `queryclaw serve` 建立连接后，才能成功保存。
+6. **发布应用**：在「版本管理与发布」中创建版本并发布。
+7. **添加机器人**：在飞书客户端中，群或私聊中搜索并添加你的机器人。
+8. **配置 QueryClaw**：在 `config.json` 的 `channels.feishu` 中填入 `app_id`、`app_secret`，设置 `enabled: true`。
+9. **启动服务**：`pip install queryclaw[feishu]` 后执行 `queryclaw serve`。
+
 **示例：**
 
 ```json

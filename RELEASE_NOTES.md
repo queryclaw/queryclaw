@@ -4,6 +4,19 @@
 
 ---
 
+## 0.4.1 (2026-02-27)
+
+### Fixes
+
+- **Feishu WebSocket event loop**: Fixed "This event loop is already running" when running `queryclaw serve`. The lark-oapi WebSocket client now uses a dedicated event loop in its thread instead of the main thread's loop.
+
+### Changes
+
+- USER_MANUAL: Added Feishu channel setup guide (EN/CN).
+- DESIGN_CHANNEL_CONFIRMATION: Technical design for interactive confirmation in channel mode.
+
+---
+
 ## 0.4.0 (2026-02-26)
 
 ### Features

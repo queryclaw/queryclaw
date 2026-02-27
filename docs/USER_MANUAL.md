@@ -243,6 +243,23 @@ Multi-channel output for `queryclaw serve`. Enable Feishu and/or DingTalk to rec
 | `client_secret`     | string | AppSecret. |
 | `allow_from`        | list   | Allowed staff_ids; empty = allow all. |
 
+**Feishu channel setup:**
+
+The Feishu channel uses **WebSocket long connection** — no public IP or domain required; only outbound access to Feishu APIs is needed.
+
+1. **Create app**: Create an enterprise app at [Feishu Open Platform](https://open.feishu.cn/app).
+2. **Get credentials**: In "Credentials & Basic Info", copy `App ID` and `App Secret`.
+3. **Enable bot**: In "Features" → "Bot", enable the bot capability.
+4. **Permissions**: In "Permissions", add:
+   - `im:message` (receive, send, send in groups).
+   - `im:message.group_at_msg` (receive @mentions in groups).
+5. **Event subscription**: In "Events & Callbacks", select **"Use long connection to receive events"** and save.
+   - You must publish the app and run `queryclaw serve` to establish the connection before saving can succeed.
+6. **Publish app**: In "Version & Release", create a version and publish.
+7. **Add bot**: In the Feishu client, search for your bot and add it to a group or start a chat.
+8. **Configure QueryClaw**: In `config.json`, set `channels.feishu` with `app_id`, `app_secret`, and `enabled: true`.
+9. **Start**: Run `pip install queryclaw[feishu]` then `queryclaw serve`.
+
 **Example:**
 
 ```json

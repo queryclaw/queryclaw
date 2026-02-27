@@ -4,6 +4,19 @@
 
 ---
 
+## 0.4.1 (2026-02-27)
+
+### 修复
+
+- **飞书 WebSocket 事件循环**：修复 `queryclaw serve` 运行时「This event loop is already running」错误。lark-oapi WebSocket 客户端现使用其线程内独立的事件循环，而非主线程的 loop。
+
+### 变更
+
+- USER_MANUAL：新增飞书通道对接指南（中英文）。
+- DESIGN_CHANNEL_CONFIRMATION：通道模式交互式确认的技术方案。
+
+---
+
 ## 0.4.0 (2026-02-26)
 
 ### 功能

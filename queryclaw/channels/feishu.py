@@ -160,6 +160,15 @@ class FeishuChannel(BaseChannel):
 
         def run_ws() -> None:
             import time
+            # lark-oapi ws.Client uses a module-level event loop; it fails when the main
+            # thread's loop is already running. Create a dedicated loop for this thread.
+            ws_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(ws_loop)
+            try:
+                import lark_oapi.ws.client as ws_client
+                ws_client.loop = ws_loop
+            except Exception:
+                pass
             while self._running:
                 try:
                     self._ws_client.start()
@@ -167,6 +176,7 @@ class FeishuChannel(BaseChannel):
                     logger.warning("Feishu WebSocket error: {}", e)
                 if self._running:
                     time.sleep(5)
+            ws_loop.close()
 
         self._ws_thread = threading.Thread(target=run_ws, daemon=True)
         self._ws_thread.start()

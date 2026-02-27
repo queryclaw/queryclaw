@@ -111,23 +111,29 @@ class DDLExecuteTool(Tool):
             elapsed = (time.monotonic() - start) * 1000
         except Exception as e:
             elapsed = (time.monotonic() - start) * 1000
+            try:
+                if self._policy.audit_enabled:
+                    await self._audit.log(AuditEntry(
+                        operation_type=validation.operation_type,
+                        sql_text=sql_stripped,
+                        status="error",
+                        execution_time_ms=round(elapsed, 2),
+                        metadata={"error": str(e)},
+                    ))
+            except Exception:
+                pass
+            return f"Error: {e}"
+
+        try:
             if self._policy.audit_enabled:
                 await self._audit.log(AuditEntry(
                     operation_type=validation.operation_type,
                     sql_text=sql_stripped,
-                    status="error",
                     execution_time_ms=round(elapsed, 2),
-                    metadata={"error": str(e)},
+                    status="success",
                 ))
-            return f"Error: {e}"
-
-        if self._policy.audit_enabled:
-            await self._audit.log(AuditEntry(
-                operation_type=validation.operation_type,
-                sql_text=sql_stripped,
-                execution_time_ms=round(elapsed, 2),
-                status="success",
-            ))
+        except Exception:
+            pass
 
         if self._on_schema_change:
             self._on_schema_change()

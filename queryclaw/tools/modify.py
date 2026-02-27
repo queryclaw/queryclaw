@@ -122,16 +122,24 @@ class DataModifyTool(Tool):
             try:
                 await self._db.rollback()
             except Exception:
-                pass
+                # Rollback failed — connection is likely broken.
+                # Force-close so the adapter can reconnect on next use.
+                try:
+                    await self._db.close()
+                except Exception:
+                    pass
 
-            if self._policy.audit_enabled:
-                await self._audit.log(AuditEntry(
-                    operation_type=validation.operation_type,
-                    sql_text=sql_stripped,
-                    status=status,
-                    execution_time_ms=round(elapsed, 2),
-                    metadata={"error": str(e)},
-                ))
+            try:
+                if self._policy.audit_enabled:
+                    await self._audit.log(AuditEntry(
+                        operation_type=validation.operation_type,
+                        sql_text=sql_stripped,
+                        status=status,
+                        execution_time_ms=round(elapsed, 2),
+                        metadata={"error": str(e)},
+                    ))
+            except Exception:
+                pass
             return f"Error: {e}"
 
         if self._policy.audit_enabled:

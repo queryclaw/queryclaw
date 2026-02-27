@@ -5,6 +5,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from loguru import logger
+
 from queryclaw.db.base import (
     ColumnInfo,
     ForeignKeyInfo,
@@ -14,6 +16,8 @@ from queryclaw.db.base import (
     TableInfo,
 )
 
+_MAX_RECONNECT_ATTEMPTS = 2
+
 
 class MySQLAdapter(SQLAdapter):
     """Async MySQL adapter using aiomysql."""
@@ -21,6 +25,7 @@ class MySQLAdapter(SQLAdapter):
     def __init__(self) -> None:
         self._conn: Any = None
         self._database: str = ""
+        self._connect_kwargs: dict[str, Any] = {}
 
     @property
     def db_type(self) -> str:
@@ -33,6 +38,7 @@ class MySQLAdapter(SQLAdapter):
     async def connect(self, **kwargs: Any) -> None:
         import aiomysql
 
+        self._connect_kwargs = kwargs.copy()
         self._database = kwargs.get("database", "")
         self._conn = await aiomysql.connect(
             host=kwargs.get("host", "localhost"),
@@ -44,14 +50,49 @@ class MySQLAdapter(SQLAdapter):
             charset="utf8mb4",
         )
 
+    async def _ensure_connected(self) -> None:
+        """Reconnect if the connection is lost."""
+        if self.is_connected:
+            try:
+                async with self._conn.cursor() as cur:
+                    await cur.execute("SELECT 1")
+                return
+            except Exception:
+                logger.warning("MySQL connection health check failed, reconnecting...")
+
+        if not self._connect_kwargs:
+            raise RuntimeError("Not connected and no stored connection parameters")
+
+        try:
+            if self._conn:
+                self._conn.close()
+        except Exception:
+            pass
+        self._conn = None
+
+        logger.info("Reconnecting to MySQL...")
+        await self.connect(**self._connect_kwargs)
+
     async def close(self) -> None:
         if self._conn:
             self._conn.close()
             self._conn = None
 
     async def execute(self, sql: str, params: tuple | None = None) -> QueryResult:
-        if not self._conn:
-            raise RuntimeError("Not connected")
+        last_error: Exception | None = None
+        for attempt in range(_MAX_RECONNECT_ATTEMPTS):
+            try:
+                await self._ensure_connected()
+                return await self._execute_once(sql, params)
+            except RuntimeError:
+                raise
+            except Exception as e:
+                last_error = e
+                logger.warning("MySQL execute failed (attempt {}/{}): {}", attempt + 1, _MAX_RECONNECT_ATTEMPTS, e)
+                self._conn = None
+        raise last_error  # type: ignore[misc]
+
+    async def _execute_once(self, sql: str, params: tuple | None = None) -> QueryResult:
         start = time.monotonic()
         async with self._conn.cursor() as cur:
             await cur.execute(sql, params or ())
@@ -67,8 +108,7 @@ class MySQLAdapter(SQLAdapter):
             )
 
     async def get_tables(self) -> list[TableInfo]:
-        if not self._conn:
-            raise RuntimeError("Not connected")
+        await self._ensure_connected()
         result = await self.execute(
             "SELECT TABLE_NAME, TABLE_ROWS, ENGINE "
             "FROM INFORMATION_SCHEMA.TABLES "
@@ -87,8 +127,7 @@ class MySQLAdapter(SQLAdapter):
         ]
 
     async def get_columns(self, table: str) -> list[ColumnInfo]:
-        if not self._conn:
-            raise RuntimeError("Not connected")
+        await self._ensure_connected()
         result = await self.execute(
             "SELECT COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, COLUMN_KEY, EXTRA "
             "FROM INFORMATION_SCHEMA.COLUMNS "
@@ -109,8 +148,7 @@ class MySQLAdapter(SQLAdapter):
         ]
 
     async def get_indexes(self, table: str) -> list[IndexInfo]:
-        if not self._conn:
-            raise RuntimeError("Not connected")
+        await self._ensure_connected()
         result = await self.execute(
             "SELECT INDEX_NAME, COLUMN_NAME, NON_UNIQUE, INDEX_TYPE "
             "FROM INFORMATION_SCHEMA.STATISTICS "
@@ -131,8 +169,7 @@ class MySQLAdapter(SQLAdapter):
         return list(idx_map.values())
 
     async def get_foreign_keys(self, table: str) -> list[ForeignKeyInfo]:
-        if not self._conn:
-            raise RuntimeError("Not connected")
+        await self._ensure_connected()
         result = await self.execute(
             "SELECT CONSTRAINT_NAME, COLUMN_NAME, "
             "REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME "
@@ -152,23 +189,21 @@ class MySQLAdapter(SQLAdapter):
         return list(fk_map.values())
 
     async def explain(self, sql: str) -> QueryResult:
-        if not self._conn:
-            raise RuntimeError("Not connected")
+        await self._ensure_connected()
         return await self.execute(f"EXPLAIN {sql}")
 
     async def begin_transaction(self) -> None:
-        if not self._conn:
-            raise RuntimeError("Not connected")
+        await self._ensure_connected()
         await self._conn.begin()
 
     async def commit(self) -> None:
-        if not self._conn:
+        if not self.is_connected:
             raise RuntimeError("Not connected")
         async with self._conn.cursor() as cur:
             await cur.execute("COMMIT")
 
     async def rollback(self) -> None:
-        if not self._conn:
+        if not self.is_connected:
             raise RuntimeError("Not connected")
         async with self._conn.cursor() as cur:
             await cur.execute("ROLLBACK")

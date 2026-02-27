@@ -1,6 +1,6 @@
 [project]
 name = "queryclaw"
-version = "0.4.8"
+version = "0.4.9"
 description = "AI-Native Database Agent for Safe & Autonomous Operations — Text-to-SQL with safety guardrails"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -66,3 +66,6 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["queryclaw*"]
+
+[tool.setuptools.package-data]
+queryclaw = ["skills/**/*"]

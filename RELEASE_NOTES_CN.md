@@ -4,6 +4,14 @@
 
 ---
 
+## 0.4.9 (2026-02-27)
+
+### 修复
+
+- **Skills 未包含在 pip 包中**：`queryclaw/skills/` 目录（6 个内置 SKILL.md）在通过 PyPI 安装时未被包含。已添加 `[tool.setuptools.package-data]`，现所有 Skills 均会打包。用户执行 `pip install queryclaw` 后将获得 data_analysis、test_data_factory、ai_column、data_detective、query_translator、schema_documenter。
+
+---
+
 ## 0.4.8 (2026-02-26)
 
 ### 功能

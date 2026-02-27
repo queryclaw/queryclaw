@@ -81,7 +81,7 @@ class DDLExecuteTool(Tool):
             if not self._policy.is_table_allowed(table):
                 return f"Error: Table '{table}' is not in the allowed_tables list."
 
-        if validation.requires_confirmation:
+        if validation.requires_confirmation and self._policy.require_confirmation:
             if self._confirm is None:
                 return (
                     f"Error: This operation requires confirmation but no confirmation handler is available.\n"

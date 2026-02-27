@@ -100,6 +100,28 @@ class TestDataModifyTool:
         rows = await write_db.execute(f"SELECT * FROM {AUDIT_TABLE}")
         assert rows.row_count >= 1
 
+    async def test_audit_skipped_when_disabled(self, write_db):
+        """When audit_enabled=False, no audit entry is written."""
+        audit = AuditLogger(write_db)
+        await audit.ensure_table()
+        before = await write_db.execute(f"SELECT COUNT(*) FROM {AUDIT_TABLE}")
+        before_count = before.rows[0][0]
+        policy = _write_policy(audit_enabled=False)
+        tool = DataModifyTool(write_db, policy, audit=audit)
+        await tool.execute(sql="INSERT INTO users VALUES (20, 'NoAudit', 'n@test.com')")
+        after = await write_db.execute(f"SELECT COUNT(*) FROM {AUDIT_TABLE}")
+        assert after.rows[0][0] == before_count
+
+    async def test_delete_without_where_no_confirmation_when_disabled(self, write_db):
+        """When require_confirmation=False, DELETE without WHERE executes without confirmation."""
+        policy = _write_policy(require_confirmation=False)
+        tool = DataModifyTool(write_db, policy)
+        result = await tool.execute(sql="DELETE FROM users")
+        assert "Success" in result
+        assert "3 row(s) affected" in result
+        rows = await write_db.execute("SELECT COUNT(*) FROM users")
+        assert rows.rows[0][0] == 0
+
     async def test_confirmation_required_no_handler(self, write_db):
         policy = _write_policy(require_confirmation=True, max_affected_rows=0)
         tool = DataModifyTool(write_db, policy)
@@ -152,6 +174,15 @@ class TestDDLExecuteTool:
         col_names = [c.name for c in cols]
         assert "age" in col_names
 
+    async def test_drop_no_confirmation_when_disabled(self, write_db):
+        """When require_confirmation=False, DROP executes without confirmation."""
+        await write_db.execute("CREATE TABLE temp_drop (id INT)")
+        tool = DDLExecuteTool(write_db, _write_policy(require_confirmation=False))
+        result = await tool.execute(sql="DROP TABLE temp_drop")
+        assert "Success" in result
+        tables = [t.name for t in await write_db.get_tables()]
+        assert "temp_drop" not in tables
+
     async def test_drop_requires_confirmation(self, write_db):
         tool = DDLExecuteTool(write_db, _write_policy(require_confirmation=True))
         result = await tool.execute(sql="DROP TABLE users")
@@ -198,6 +229,18 @@ class TestDDLExecuteTool:
         await tool.execute(sql="CREATE TABLE logs (id INTEGER PRIMARY KEY)")
         rows = await write_db.execute(f"SELECT * FROM {AUDIT_TABLE}")
         assert rows.row_count >= 1
+
+    async def test_audit_skipped_when_disabled(self, write_db):
+        """When audit_enabled=False, no audit entry is written."""
+        audit = AuditLogger(write_db)
+        await audit.ensure_table()
+        before = await write_db.execute(f"SELECT COUNT(*) FROM {AUDIT_TABLE}")
+        before_count = before.rows[0][0]
+        policy = _write_policy(audit_enabled=False)
+        tool = DDLExecuteTool(write_db, policy, audit=audit)
+        await tool.execute(sql="CREATE TABLE no_audit_ddl (id INTEGER PRIMARY KEY)")
+        after = await write_db.execute(f"SELECT COUNT(*) FROM {AUDIT_TABLE}")
+        assert after.rows[0][0] == before_count
 
     async def test_blocked_pattern(self, write_db):
         policy = _write_policy(blocked_patterns=["DROP DATABASE"])

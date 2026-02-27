@@ -83,7 +83,7 @@ class DataModifyTool(Tool):
 
         dry_result = await self._dry_run.analyze(sql_stripped)
 
-        needs_confirm = (
+        needs_confirm = self._policy.require_confirmation and (
             validation.requires_confirmation
             or self._policy.requires_confirmation_for(dry_result.estimated_rows)
         )

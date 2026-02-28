@@ -8,6 +8,12 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
 
+<!-- TODO: Add demo to docs/assets/demo.gif (asciinema or GIF), then uncomment:
+![Demo](docs/assets/demo.gif)
+-->
+
+**7 tools** | **7 skills** | **4 databases** | **243+ tests** | **Multi-LLM via LiteLLM**
+
 ---
 
 ## What is QueryClaw?
@@ -33,6 +39,24 @@ Developers spend countless hours on repetitive database tasks: writing queries, 
 
 QueryClaw sits in the sweet spot: **an intelligent agent that understands both your natural language intent and the database semantics**.
 
+### Before / After
+
+| | Traditional Workflow | With QueryClaw |
+|---|---|---|
+| **Query** | Write SQL by hand, guess table names | `"Show me top customers"` — Agent explores schema and builds the query |
+| **Modify data** | Write UPDATE, hope WHERE is correct, no audit | Agent validates, dry-runs, asks for confirmation, records before/after snapshot |
+| **Generate test data** | Write scripts, handle FK constraints manually | `"Generate 100 test users with orders"` — respects schema automatically |
+| **Diagnose slow query** | Run EXPLAIN, read docs, iterate | `"Why is this query slow?"` — Agent runs EXPLAIN, suggests indexes |
+| **Team collaboration** | Share SQL snippets in chat | Ask in Feishu/DingTalk, Agent replies with results directly |
+
+### Key Differentiators
+
+- **Autonomous reasoning** — A full ReACT agent loop, not a one-shot translator. It explores schemas, runs queries, observes results, and adjusts its approach across multiple steps
+- **Safety-first writes** — Multi-layer protection for mutations: policy checks → SQL AST validation → dry-run → human confirmation → transaction wrapping → full audit with before/after snapshots
+- **Multi-channel** — Use it in the terminal (`queryclaw chat`) or deploy to team messaging (`queryclaw serve`) for Feishu / DingTalk with interactive confirmation
+- **Extensible skills** — Add new capabilities via `SKILL.md` markdown files — no code changes, no redeployment. The agent loads skills on demand
+- **Multi-database** — MySQL, PostgreSQL, SQLite, SeekDB (OceanBase) with a clean adapter interface for adding more
+
 ### What You Can Do
 
 ```
@@ -42,7 +66,68 @@ QueryClaw sits in the sweet spot: **an intelligent agent that understands both y
 > "Find orphaned records and fix foreign key violations"
 > "Based on product descriptions, generate a one-sentence summary column"
 > "What tables are related to the orders system? Draw the relationships"
-> "Check if there's any PII stored in plaintext"
+```
+
+## Installation
+
+```bash
+pip install queryclaw
+```
+
+For PostgreSQL support:
+
+```bash
+pip install queryclaw[postgresql]
+```
+
+For Feishu channel support:
+
+```bash
+pip install queryclaw[feishu]
+```
+
+For DingTalk channel support:
+
+```bash
+pip install queryclaw[dingtalk]
+```
+
+For all optional features (PostgreSQL + SQL validation + Feishu + DingTalk):
+
+```bash
+pip install queryclaw[all]
+```
+
+## Quick Start
+
+```bash
+# 1. Initialize configuration
+queryclaw onboard
+
+# 2. Edit config — set your database connection and LLM API key
+#    Config location: ~/.queryclaw/config.json
+
+# 3. Start chatting with your database
+queryclaw chat
+```
+
+Example interaction:
+
+```
+You: What tables are in this database?
+Agent: [calls schema_inspect] Found 12 tables. Here are the main ones...
+
+You: Show me the top 5 customers by total order amount
+Agent: [calls query_execute] Here are the results...
+
+You: Add an index on orders.customer_id
+Agent: ⚠️ This is a DDL operation. Proceed? [y/N]
+```
+
+For channel mode (Feishu / DingTalk):
+
+```bash
+queryclaw serve
 ```
 
 ## Architecture
@@ -76,57 +161,53 @@ QueryClaw uses a **ReACT (Reasoning + Acting) loop** powered by LLMs, with a mod
                     └─────────────────────────────┘
 ```
 
-**Key design choices:**
+The LLM provider layer is powered by [LiteLLM](https://github.com/BerriAI/litellm), supporting OpenAI, Anthropic, Gemini, DeepSeek, and any compatible API.
 
-- **Multi-database**: Adapter-based architecture supports MySQL (primary), SQLite, PostgreSQL, SeekDB (AI-native search), with extensibility for MongoDB, Redis, and more
-- **Multi-LLM**: Unified provider layer via [LiteLLM](https://github.com/BerriAI/litellm) — use OpenAI, Anthropic, Gemini, DeepSeek, or any compatible API
-- **Extensible skills**: Add new capabilities via `SKILL.md` files — no code changes needed
-- **Safety-first**: Progressive safety with policy checks, SQL AST validation, dry-runs, transaction wrapping, human confirmation, and full audit logging
+## Memory & Context
 
-## Database-Native Memory — Smarter With Every Use
+QueryClaw maintains **session memory** throughout each conversation — it tracks the schemas you've explored, queries you've run, and modifications you've made, so you can build on previous steps without repeating context. The [audit trail](#full-audit-trail) also provides persistent operation history, queryable via standard SQL.
 
-Unlike file-based memory in general-purpose agents, QueryClaw stores its memory **directly in the database it manages** — the most natural and reliable place for structured data.
+**Coming soon** (Phase 3): Persistent database-native memory — schema knowledge, learned patterns, and semantic recall that accumulates across sessions, making the Agent smarter with every use.
 
-Every interaction teaches the Agent something: table relationships, business meanings of columns, common query patterns, data quirks. This knowledge is persisted and accumulates over time:
-
-- **Schema knowledge**: "The `status` column in `orders` uses 1=pending, 2=shipped, 3=completed"
-- **Learned patterns**: "This team usually queries `daily_sales` grouped by region"
-- **Operation history**: "Last Tuesday we added an index on `users.email` to fix the slow login query"
-
-The more you use QueryClaw, the less you need to explain. It remembers your database the way a seasoned DBA remembers the systems they've managed for years — except it never forgets.
-
-## Full Audit Trail — Every Operation, Recorded
+## Full Audit Trail
 
 Every action QueryClaw takes is recorded in a dedicated audit table within the managed database (`_queryclaw_audit_log`). This provides:
 
 - **Complete lineage**: From natural language prompt → generated SQL → execution result → affected rows
-- **Before/after snapshots**: For data modifications, the state before and after the change
+- **Before/after snapshots**: For data modifications, the state before and after the change is captured as JSON
 - **Timestamp + session tracking**: Who asked what, when, and in which conversation
 - **Rollback reference**: If something goes wrong, the audit log tells you exactly what happened and how to undo it
+
+Example: after an `UPDATE users SET status = 'active' WHERE id = 42`, the audit log records:
+
+```
+sql_text:         UPDATE users SET status = 'active' WHERE id = 42
+affected_rows:    1
+before_snapshot:  [{"id": 42, "status": "inactive", "name": "Alice"}]
+after_snapshot:   [{"id": 42, "status": "active", "name": "Alice"}]
+```
 
 This is not just logging — it's a full **security audit trail** that compliance teams, DBAs, and developers can query using standard SQL. Since it lives in the database itself, it's always available, always queryable, and backed by the same ACID guarantees as your data.
 
 ## Built-in Skills
 
-QueryClaw's real power comes from its skill system. Each skill teaches the Agent a domain-specific workflow:
+QueryClaw's real power comes from its skill system. Each skill teaches the Agent a domain-specific workflow — no code changes needed, just `SKILL.md` files:
 
 | Skill | What It Does |
 |-------|-------------|
 | **AI Column** | Generate column values using LLM (summaries, sentiment, translations, scores) |
 | **Test Data Factory** | Generate semantically realistic test data respecting FK constraints |
 | **Data Detective** | Trace data lineage across related tables to find the root cause of bugs |
+| **Data Analysis** | Statistical analysis, distribution profiling, and data quality assessment |
 | **Schema Documenter** | Auto-generate schema documentation with business context from naming + sampling |
 | **Query Translator** | Explain complex SQL in plain language, identify issues, suggest optimizations |
-| **Index Advisor** | Analyze slow queries, suggest indexes, estimate write impact |
-| **Data Healer** | Find and fix dirty data — orphans, format inconsistencies, semantic errors |
-| **Data Masker** | Auto-detect PII columns and generate realistic anonymized data |
-| **Anomaly Scanner** | Proactively detect outliers, distribution shifts, and suspicious patterns |
-| **Smart Migrator** | Generate migration scripts from natural language, with rollback and dry-run |
 | **SeekDB Vector Search** | Vector search, semantic search, AI_EMBED, hybrid search in SeekDB (OceanBase AI-native DB) |
 
-> Full list with priorities: [docs/SKILLS_ROADMAP.md](docs/SKILLS_ROADMAP.md)
+> More skills are planned (Index Advisor, Data Healer, Anomaly Scanner, etc.) — see [Skills Roadmap](docs/SKILLS_ROADMAP.md) for the full list and priorities.
 
 ## Roadmap
+
+> Phases are developed in parallel where feasible; numbering reflects logical grouping, not strict dependency order.
 
 ### Phase 1: MVP — Read-Only Agent *(completed)*
 
@@ -134,19 +215,20 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 - ReACT agent loop
 - LLM provider layer (LiteLLM)
 - Database adapters: MySQL + SQLite
-- Read-only tools: `schema_inspect`, `query_execute`, `explain_plan`
+- Read-only tools: `schema_inspect`, `query_execute`, `explain_plan`, `read_skill`
 - Configuration system
 - Basic skill loading
 
 ### Phase 2: Write Operations + Safety *(completed)*
 
 - PostgreSQL adapter (asyncpg)
+- SeekDB adapter (OceanBase AI-native database)
 - Safety layer: policy engine, SQL AST validator, dry-run engine, audit logger
+- Before/after data snapshots for all DML operations
 - Subagent system: `spawn_subagent` tool for delegated tasks
 - Write tools: `data_modify`, `ddl_execute`, `transaction`
 - Human-in-the-loop confirmation flow for destructive operations
-- Read-only skills: Schema Documenter, Query Translator, Data Detective
-- Write skills: AI Column, Test Data Factory
+- Skills: Schema Documenter, Query Translator, Data Detective, Data Analysis, AI Column, Test Data Factory, SeekDB Vector Search
 - `SafetyConfig` in configuration system
 
 ### Phase 3: Advanced Skills + Memory
@@ -155,13 +237,14 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 - Cron system + Heartbeat (proactive monitoring)
 - Skills: Index Advisor, Data Healer, Anomaly Scanner, Smart Migrator
 - Multi-step planning for complex tasks
+- SeekDB Fork Table sandbox for safe experimentation
 
 ### Phase 4: Multi-Channel Output *(completed)*
 
 - Message bus + bidirectional channels (Feishu, DingTalk)
 - `queryclaw serve` — run Agent in channel mode; ask questions in Feishu/DingTalk and get responses
 - Optional dependencies: `queryclaw[feishu]`, `queryclaw[dingtalk]`
-- Destructive operations rejected in channel mode when `require_confirmation=True`
+- Interactive confirmation in channels — reply "confirm" or "cancel" to approve or reject destructive operations
 
 ### Phase 5: Ecosystem Integration
 
@@ -173,48 +256,12 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 
 ### Phase 5+: Vector & AI-Native DB
 
-Combining with vector stores and AI-native databases unlocks new capabilities:
-
-| Direction | Highlight |
-|-----------|-----------|
-| **Vector + Schema** | Semantic schema search — find tables/columns by meaning (e.g. "tables about user auth") over large schemas; RAG over schema + docs. |
-| **Vector + Query** | Hybrid queries — SQL filters plus vector similarity (e.g. "orders semantically similar to this description"); works with pgvector or sidecar vector store. |
-| **Vector + Memory** | Semantic recall — memory stored as embeddings; "similar to that slow query we fixed" retrieves past solutions; makes the agent smarter over time. |
-| **Vector + AI Column** | One-click embedding columns — generate and store embeddings for a column (e.g. `description`) for similarity search, dedup, clustering inside the same DB. |
-| **AI-Native DB** | Single agent entry — use the DB's built-in NL2SQL when appropriate; use QueryClaw's ReACT + skills for complex, multi-step, or skill-based tasks. |
-| **AI-Native DB** | Skills on top — Test Data Factory, Data Detective, AI Column, compliance scan; unified memory and audit across relational, vector, and AI-native backends. |
+- **Semantic schema search** — find tables/columns by meaning over large schemas using vector embeddings
+- **Hybrid queries** — combine SQL filters with vector similarity (pgvector or sidecar vector store)
+- **Vectorized memory** — semantic recall across sessions; the agent gets smarter over time
+- **AI-native DB integration** — unified entry point for relational, vector, and AI-native backends
 
 > Detailed architecture plan: [docs/PLAN_ARCHITECTURE.md](docs/PLAN_ARCHITECTURE.md)
-
-## Installation
-
-```bash
-pip install queryclaw
-```
-
-For PostgreSQL support:
-
-```bash
-pip install queryclaw[postgresql]
-```
-
-For Feishu channel support:
-
-```bash
-pip install queryclaw[feishu]
-```
-
-For DingTalk channel support:
-
-```bash
-pip install queryclaw[dingtalk]
-```
-
-For all optional features (PostgreSQL + SQL validation + Feishu + DingTalk):
-
-```bash
-pip install queryclaw[all]
-```
 
 ## Documentation
 

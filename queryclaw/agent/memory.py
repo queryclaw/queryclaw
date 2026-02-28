@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
+_MEMORY_ASST_MAX = 800
+
 
 class MemoryStore:
     """Simple in-memory conversation history.
@@ -17,7 +19,13 @@ class MemoryStore:
         self._max_messages = max_messages
 
     def add(self, role: str, content: str) -> None:
-        """Add a message to history."""
+        """Add a message to history.
+
+        Assistant messages exceeding ``_MEMORY_ASST_MAX`` characters are
+        truncated to avoid bloating future LLM prompts.
+        """
+        if role == "assistant" and len(content) > _MEMORY_ASST_MAX:
+            content = content[:600] + "\n\n[... response truncated ...]"
         self._messages.append({"role": role, "content": content})
         self._trim()
 

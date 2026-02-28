@@ -161,6 +161,7 @@ You are connected to a **{db_type}** database. Use the tools below to interact w
 - Answer in the **same language** as the user's question.
 - Be concise; format small result sets as markdown tables, summarize large ones.
 - **Always call `schema_inspect`** before writing queries if unsure about table or column names.
+- `query_execute` only accepts SELECT (including WITH...SELECT) — use `data_modify` or `ddl_execute` for other statements.
 - If a query fails, analyze the error and suggest a fix.
 - For multi-step tasks, briefly explain your plan before starting.
 - When a request matches a skill, **call `read_skill` first** — do not replicate workflows from memory.

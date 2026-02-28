@@ -4,6 +4,16 @@
 
 ---
 
+## 0.5.5 (2026-02-28)
+
+### Improvements
+
+- **Message compaction in agent loop**: Old tool results (e.g. SKILL.md content from `read_skill`) are automatically truncated in subsequent LLM iterations, preventing the same ~1000-token payload from being re-sent on every call.
+- **Memory truncation**: Long assistant responses (>800 chars) are truncated when stored in conversation history, keeping future prompts lean.
+- **SELECT-only constraint**: Added explicit `query_execute` SELECT-only reminders in interaction guidelines and the `data_detective` skill to reduce wasted LLM calls from invalid SQL attempts.
+
+---
+
 ## 0.5.4 (2026-02-28)
 
 ### Improvements

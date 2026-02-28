@@ -3,6 +3,8 @@ description: "Detect data quality issues, anomalies, and inconsistencies"
 ---
 # Data Detective
 
+> **Constraint**: `query_execute` only accepts `SELECT` (including `WITH ... SELECT`). Do not use `CREATE TEMPORARY TABLE`, `SET`, or any non-SELECT statement with it. For derived computations, use subqueries or CTEs.
+
 When the user asks for data quality analysis or anomaly detection, follow these steps:
 
 ## 1. Profile the Table

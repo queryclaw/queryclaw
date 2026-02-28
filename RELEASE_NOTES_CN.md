@@ -4,6 +4,16 @@
 
 ---
 
+## 0.5.5 (2026-02-28)
+
+### 优化
+
+- **Agent Loop 消息压缩**：旧的 tool result（如 `read_skill` 返回的 SKILL.md 全文）在后续 LLM 迭代中自动截断，避免每轮重复发送约 1000 tokens 的内容。
+- **历史回复截断**：过长的 assistant 回复（>800 字符）在存入对话记忆时自动截断，减少未来 prompt 的 token 消耗。
+- **SELECT 约束提示**：在交互指引和 `data_detective` 技能中添加 `query_execute` 仅支持 SELECT 的明确提示，减少因无效 SQL 导致的浪费轮次。
+
+---
+
 ## 0.5.4 (2026-02-28)
 
 ### 优化

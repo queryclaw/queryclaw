@@ -1,6 +1,6 @@
 [project]
 name = "queryclaw"
-version = "0.5.4"
+version = "0.5.5"
 description = "AI-Native Database Agent for Safe & Autonomous Operations — Text-to-SQL with safety guardrails"
 readme = "README.md"
 requires-python = ">=3.10"

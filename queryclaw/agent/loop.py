@@ -10,6 +10,10 @@ from loguru import logger
 
 from typing import Callable, Awaitable
 
+_COMPACT_KEEP_TAIL = 6
+_COMPACT_TOOL_MAX = 500
+_COMPACT_ASST_MAX = 300
+
 from queryclaw.agent.context import ContextBuilder
 from queryclaw.agent.memory import MemoryStore
 from queryclaw.agent.skills import SkillsLoader
@@ -171,8 +175,10 @@ class AgentLoop:
                     "\n---\n".join(_format_msg(m) for m in messages),
                 )
 
+            compact = self._compact_messages(messages)
+
             response = await self.provider.chat(
-                messages=messages,
+                messages=compact,
                 tools=self.tools.get_definitions(),
                 model=self.model,
                 temperature=self.temperature,
@@ -216,6 +222,39 @@ class AgentLoop:
             final_content = "(Reached maximum iterations without a final response.)"
 
         return final_content, tools_used, messages
+
+    @staticmethod
+    def _compact_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Return a token-efficient copy of *messages*.
+
+        The last ``_COMPACT_KEEP_TAIL`` messages are kept intact so the LLM
+        has full context for the current iteration.  Older tool results and
+        assistant text messages are truncated to save tokens.
+        """
+        # +1 for system prompt at index 0
+        if len(messages) <= _COMPACT_KEEP_TAIL + 1:
+            return messages
+
+        cutoff = len(messages) - _COMPACT_KEEP_TAIL
+        result: list[dict[str, Any]] = [messages[0]]
+
+        for i in range(1, len(messages)):
+            msg = messages[i]
+            if i >= cutoff:
+                result.append(msg)
+                continue
+
+            role = msg.get("role")
+            content = msg.get("content") or ""
+
+            if role == "tool" and len(content) > _COMPACT_TOOL_MAX:
+                result.append({**msg, "content": content[:300] + "\n\n[... truncated ...]"})
+            elif role == "assistant" and "tool_calls" not in msg and len(content) > _COMPACT_ASST_MAX:
+                result.append({**msg, "content": content[:200] + "\n[... truncated ...]"})
+            else:
+                result.append(msg)
+
+        return result
 
     def reset(self) -> None:
         """Clear conversation history and schema cache."""

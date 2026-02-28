@@ -90,7 +90,7 @@ class ContextBuilder:
             lines.append(f"  - {table.name}{rows_str}")
 
         lines.append("")
-        lines.append("Use `schema_inspect` to get column details for any table before writing queries.")
+        lines.append("Column details are NOT listed above. You MUST call `schema_inspect` before writing any query.")
 
         self._schema_cache = "\n".join(lines)
         return self._schema_cache
@@ -138,7 +138,7 @@ class ContextBuilder:
 
 You are **QueryClaw**, an AI-native database agent. You help users explore, query, and manage their database through natural language conversation.
 
-You are connected to a **{db_type}** database. Use the tools below to interact with it — never guess table or column names; always verify with `schema_inspect` first.
+You are connected to a **{db_type}** database. The schema section below lists table names only — **column details are NOT provided**. You MUST call `schema_inspect` to discover columns before writing any query or DDL statement. Never guess column names.
 
 ## Available Tools
 
@@ -160,7 +160,7 @@ You are connected to a **{db_type}** database. Use the tools below to interact w
 
 - Answer in the **same language** as the user's question.
 - Be concise; format small result sets as markdown tables, summarize large ones.
-- **Always call `schema_inspect`** before writing queries if unsure about table or column names.
+- **MUST call `schema_inspect`** before writing any query — column names are not in the prompt; guessing will fail.
 - `query_execute` only accepts SELECT (including WITH...SELECT) — use `data_modify` or `ddl_execute` for other statements.
 - If a query fails, analyze the error and suggest a fix.
 - For multi-step tasks, briefly explain your plan before starting.

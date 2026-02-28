@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.6 (2026-02-28)
+
+### Improvements
+
+- **Stronger schema_inspect enforcement**: System prompt now explicitly states that column details are NOT provided and the LLM MUST call `schema_inspect` before writing any query or DDL. Prevents column-name guessing errors observed after schema compaction in v0.5.4.
+
+---
+
 ## 0.5.5 (2026-02-28)
 
 ### Improvements

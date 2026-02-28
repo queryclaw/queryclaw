@@ -4,6 +4,19 @@
 
 ---
 
+## 0.5.1 (2026-02-28)
+
+### 功能
+
+- **Chat 调试模式**：`queryclaw chat --debug`（或 `-d`）将每次发送给 LLM 的 prompt 打印到终端，便于调试系统提示、工具调用和对话上下文。
+
+### 变更
+
+- `queryclaw/agent/loop.py`：`_run_agent_loop` 新增 `log_prompt`；`chat(debug=...)` 控制是否打印。
+- `queryclaw/cli/commands.py`：`chat` 命令新增 `--debug` / `-d` 选项。
+
+---
+
 ## 0.5.0 (2026-02-27)
 
 ### 变更

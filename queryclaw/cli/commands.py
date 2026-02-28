@@ -145,7 +145,7 @@ async def _confirm_operation(sql: str, message: str) -> bool:
     return answer in ("y", "yes")
 
 
-async def _run_chat(config: Config, message: str | None, render_markdown: bool) -> int:
+async def _run_chat(config: Config, message: str | None, render_markdown: bool, debug: bool = False) -> int:
     provider = _make_provider(config)
     adapter = await AdapterRegistry.create_and_connect(**config.database.model_dump())
     try:
@@ -169,7 +169,7 @@ async def _run_chat(config: Config, message: str | None, render_markdown: bool) 
         )
 
         if message:
-            response = await agent.chat(message)
+            response = await agent.chat(message, debug=debug)
             _render_response(response, render_markdown)
             return 0
 
@@ -188,7 +188,7 @@ async def _run_chat(config: Config, message: str | None, render_markdown: bool) 
                 console.print("[dim]Bye.[/dim]")
                 return 0
 
-            response = await agent.chat(user_input)
+            response = await agent.chat(user_input, debug=debug)
             _render_response(response, render_markdown)
     finally:
         await adapter.close()
@@ -213,12 +213,18 @@ def chat(
         "--no-markdown",
         help="Render output as plain text instead of markdown.",
     ),
+    debug: bool = typer.Option(
+        False,
+        "--debug",
+        "-d",
+        help="Print LLM prompts to the console (for debugging).",
+    ),
 ) -> None:
     """Start a chat session with QueryClaw."""
     config = load_config(config_path)
 
     try:
-        exit_code = asyncio.run(_run_chat(config, message, render_markdown=not no_markdown))
+        exit_code = asyncio.run(_run_chat(config, message, render_markdown=not no_markdown, debug=debug))
     except ValueError as e:
         console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(code=1) from e

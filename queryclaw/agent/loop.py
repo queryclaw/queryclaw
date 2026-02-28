@@ -113,17 +113,21 @@ class AgentLoop:
                 policy=self.safety_policy,
             ))
 
-    async def chat(self, user_message: str) -> str:
+    async def chat(self, user_message: str, debug: bool = False) -> str:
         """Process a user message and return the agent's response.
 
         This is the main entry point for the interactive loop.
+
+        Args:
+            user_message: The user's input message.
+            debug: If True, print LLM prompts to the log (use with `queryclaw chat --debug`).
         """
         messages = await self.context.build_messages(
             history=self.memory.get_recent(),
             current_message=user_message,
         )
 
-        final_content, tools_used, updated_messages = await self._run_agent_loop(messages)
+        final_content, tools_used, updated_messages = await self._run_agent_loop(messages, log_prompt=debug)
 
         self.memory.add("user", user_message)
         if final_content:
@@ -137,6 +141,7 @@ class AgentLoop:
     async def _run_agent_loop(
         self,
         messages: list[dict[str, Any]],
+        log_prompt: bool = False,
     ) -> tuple[str | None, list[str], list[dict[str, Any]]]:
         """Run the ReACT iteration loop.
 
@@ -149,6 +154,22 @@ class AgentLoop:
 
         while iteration < self.max_iterations:
             iteration += 1
+
+            # Log the prompt sent to the LLM on each call (chat mode only)
+            if log_prompt:
+                def _format_msg(m: dict[str, Any]) -> str:
+                    role = m.get("role", "?")
+                    content = m.get("content")
+                    if content is None and "tool_calls" in m:
+                        return f"[{role}] tool_calls={m['tool_calls']}"
+                    s = str(content) if content is not None else ""
+                    return f"[{role}] {s[:800]}{'...' if len(s) > 800 else ''}"
+
+                logger.info(
+                    "LLM prompt (iteration {}):\n{}",
+                    iteration,
+                    "\n---\n".join(_format_msg(m) for m in messages),
+                )
 
             response = await self.provider.chat(
                 messages=messages,
@@ -273,7 +294,7 @@ class AgentLoop:
             current_message=msg.content,
         )
 
-        final_content, tools_used, updated_messages = await self._run_agent_loop(messages)
+        final_content, tools_used, updated_messages = await self._run_agent_loop(messages, log_prompt=False)
 
         memory.add("user", msg.content)
         if final_content:

@@ -4,6 +4,19 @@
 
 ---
 
+## 0.5.1 (2026-02-28)
+
+### Features
+
+- **Chat debug mode**: `queryclaw chat --debug` (or `-d`) prints each LLM prompt to the console for debugging. Useful for inspecting system prompts, tool calls, and conversation context.
+
+### Changes
+
+- `queryclaw/agent/loop.py`: Add `log_prompt` to `_run_agent_loop`; `chat(debug=...)` controls it.
+- `queryclaw/cli/commands.py`: Add `--debug` / `-d` option to `chat` command.
+
+---
+
 ## 0.5.0 (2026-02-27)
 
 ### Changes

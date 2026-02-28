@@ -18,6 +18,15 @@ class ValidationResult:
 
 _DESTRUCTIVE_KEYWORDS = {"DROP", "TRUNCATE"}
 
+# Always blocked — cannot be overridden by config (security-critical)
+_ALWAYS_BLOCKED = [
+    "ALTER USER",
+    "SET PASSWORD",
+    "CREATE USER",
+    "IDENTIFIED BY",
+    "GRANT ",
+]
+
 _WRITE_PREFIXES = {
     "INSERT": "insert",
     "UPDATE": "update",
@@ -37,7 +46,15 @@ class QueryValidator:
     """
 
     def __init__(self, blocked_patterns: list[str] | None = None) -> None:
-        self._blocked = [p.upper() for p in (blocked_patterns or [])]
+        user_blocked = [p.upper() for p in (blocked_patterns or [])]
+        # Merge: always-blocked (security-critical) + user config
+        seen = set()
+        merged = []
+        for p in _ALWAYS_BLOCKED + user_blocked:
+            if p not in seen:
+                seen.add(p)
+                merged.append(p)
+        self._blocked = merged
 
     def validate(self, sql: str, dialect: str = "mysql") -> ValidationResult:
         """Validate a SQL statement and return a structured result."""

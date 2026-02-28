@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.10 (2026-02-28)
+
+### 安全
+
+- **始终拦截密码相关 SQL**：`ALTER USER`、`SET PASSWORD`、`CREATE USER`、`IDENTIFIED BY`、`GRANT` 现已在 validator 中**始终**拦截，不受用户 `blocked_patterns` 配置覆盖。即使配置覆盖默认值，也能防止密码修改类攻击。
+
+---
+
 ## 0.5.9 (2026-02-26)
 
 ### 功能

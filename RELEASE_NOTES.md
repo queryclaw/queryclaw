@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.10 (2026-02-28)
+
+### Security
+
+- **Always-blocked password patterns**: `ALTER USER`, `SET PASSWORD`, `CREATE USER`, `IDENTIFIED BY`, `GRANT` are now **always** blocked in the validator, regardless of user `blocked_patterns` config. Prevents password modification attacks even when config overwrites defaults.
+
+---
+
 ## 0.5.9 (2026-02-26)
 
 ### Features

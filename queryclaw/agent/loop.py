@@ -22,6 +22,7 @@ from queryclaw.db.base import SQLAdapter
 from queryclaw.providers.base import LLMProvider
 from queryclaw.safety.audit import AuditLogger
 from queryclaw.safety.policy import SafetyPolicy
+from queryclaw.safety.redact import redact_private_info
 from queryclaw.safety.validator import QueryValidator
 from queryclaw.tools.registry import ToolRegistry
 from queryclaw.tools.read_skill import ReadSkillTool
@@ -134,13 +135,15 @@ class AgentLoop:
         final_content, tools_used, updated_messages = await self._run_agent_loop(messages, log_prompt=debug)
 
         self.memory.add("user", user_message)
+        out = final_content or "(no response)"
+        out = redact_private_info(out)
         if final_content:
-            self.memory.add("assistant", final_content)
+            self.memory.add("assistant", out)
 
         if tools_used:
             logger.debug("Tools used: {}", ", ".join(tools_used))
 
-        return final_content or "(no response)"
+        return out
 
     async def _run_agent_loop(
         self,
@@ -342,9 +345,10 @@ class AgentLoop:
         if tools_used:
             logger.debug("Tools used: {}", ", ".join(tools_used))
 
+        out = final_content or "(no response)"
         return OutboundMessage(
             channel=msg.channel,
             chat_id=msg.chat_id,
-            content=final_content or "(no response)",
+            content=redact_private_info(out),
             metadata=getattr(msg, "metadata", None) or {},
         )

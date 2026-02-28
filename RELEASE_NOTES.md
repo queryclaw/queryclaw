@@ -4,6 +4,20 @@
 
 ---
 
+## 0.5.8 (2026-02-28)
+
+### Security
+
+- **Privacy redaction**: Never expose database passwords, local IPs, or credentials. Tool results, error messages, and agent responses are redacted before reaching the user or LLM.
+- **Blocked SQL**: `ALTER USER`, `SET PASSWORD`, `CREATE USER`, `IDENTIFIED BY`, `GRANT` are now blocked by default to prevent password modification.
+- **Sensitive columns**: Query results redact values in columns named `password`, `pwd`, `secret`, `api_key`, etc.
+
+### Documentation
+
+- **External access design**: Added [DESIGN_EXTERNAL_ACCESS.md](docs/DESIGN_EXTERNAL_ACCESS.md) (en + zh) for future web_fetch/api_call tools.
+
+---
+
 ## 0.5.7 (2026-02-28)
 
 ### Features

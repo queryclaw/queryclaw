@@ -36,6 +36,18 @@ class TestQueryResult:
         text = r.to_text(max_rows=10)
         assert "190 more rows" in text
 
+    def test_to_text_redacts_password_columns(self):
+        r = QueryResult(
+            columns=["id", "username", "password"],
+            rows=[(1, "alice", "secret123"), (2, "bob", "pwd456")],
+        )
+        text = r.to_text()
+        assert "alice" in text
+        assert "bob" in text
+        assert "secret123" not in text
+        assert "pwd456" not in text
+        assert "[REDACTED]" in text
+
     def test_to_text_no_columns(self):
         r = QueryResult(affected_rows=5)
         text = r.to_text()

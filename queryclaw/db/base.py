@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any
 
+from queryclaw.safety.redact import is_sensitive_column
+
 
 @dataclass
 class QueryResult:
@@ -21,13 +23,23 @@ class QueryResult:
         return len(self.rows)
 
     def to_text(self, max_rows: int = 100) -> str:
-        """Format as a readable text table."""
+        """Format as a readable text table.
+
+        Values in sensitive columns (password, pwd, secret, etc.) are redacted.
+        """
         if not self.columns:
             return f"(no columns, {self.affected_rows} rows affected)"
+        sensitive = [is_sensitive_column(c) for c in self.columns]
         lines = [" | ".join(self.columns)]
         lines.append("-+-".join("-" * max(len(c), 4) for c in self.columns))
         for row in self.rows[:max_rows]:
-            lines.append(" | ".join(str(v) for v in row))
+            cells = []
+            for i, v in enumerate(row):
+                if i < len(sensitive) and sensitive[i]:
+                    cells.append("[REDACTED]")
+                else:
+                    cells.append(str(v))
+            lines.append(" | ".join(cells))
         if len(self.rows) > max_rows:
             lines.append(f"... ({len(self.rows) - max_rows} more rows)")
         return "\n".join(lines)

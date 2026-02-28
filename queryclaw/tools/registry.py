@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from queryclaw.safety.redact import redact_private_info
 from queryclaw.tools.base import Tool
 
 
@@ -45,13 +46,15 @@ class ToolRegistry:
         try:
             errors = tool.validate_params(params)
             if errors:
-                return f"Error: Invalid parameters for tool '{name}': " + "; ".join(errors) + _HINT
+                return redact_private_info(
+                    f"Error: Invalid parameters for tool '{name}': " + "; ".join(errors) + _HINT
+                )
             result = await tool.execute(**params)
             if isinstance(result, str) and result.startswith("Error"):
-                return result + _HINT
-            return result
+                return redact_private_info(result + _HINT)
+            return redact_private_info(result)
         except Exception as e:
-            return f"Error executing {name}: {str(e)}" + _HINT
+            return redact_private_info(f"Error executing {name}: {str(e)}" + _HINT)
 
     @property
     def tool_names(self) -> list[str]:

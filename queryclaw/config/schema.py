@@ -35,6 +35,11 @@ class SafetyConfig(Base):
     blocked_patterns: list[str] = Field(default_factory=lambda: [
         "DROP DATABASE",
         "DROP SCHEMA",
+        "ALTER USER",
+        "SET PASSWORD",
+        "CREATE USER",
+        "IDENTIFIED BY",
+        "GRANT ",
     ])
     audit_enabled: bool = True
 

@@ -20,6 +20,12 @@ class SafetyPolicy:
     blocked_patterns: list[str] = field(default_factory=lambda: [
         "DROP DATABASE",
         "DROP SCHEMA",
+        # Privacy: never allow password exposure or modification
+        "ALTER USER",
+        "SET PASSWORD",
+        "CREATE USER",
+        "IDENTIFIED BY",
+        "GRANT ",
     ])
     audit_enabled: bool = True
 

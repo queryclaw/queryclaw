@@ -49,6 +49,10 @@ class TestSafetyPolicy:
         p = SafetyPolicy()
         assert "DROP DATABASE" in p.blocked_patterns
         assert "DROP SCHEMA" in p.blocked_patterns
+        assert "ALTER USER" in p.blocked_patterns
+        assert "SET PASSWORD" in p.blocked_patterns
+        assert "CREATE USER" in p.blocked_patterns
+        assert "IDENTIFIED BY" in p.blocked_patterns
 
 
 # -- Validator ----------------------------------------------------------------
@@ -122,6 +126,17 @@ class TestQueryValidator:
         v = QueryValidator()
         r = v.validate("SELECT u.name FROM users u JOIN orders o ON u.id = o.user_id")
         assert "users" in r.tables_affected or "orders" in r.tables_affected
+
+    def test_password_sql_blocked(self):
+        v = QueryValidator(blocked_patterns=SafetyPolicy().blocked_patterns)
+        for sql in (
+            "ALTER USER 'root'@'localhost' IDENTIFIED BY 'newpass'",
+            "SET PASSWORD FOR 'u'@'%' = 'secret'",
+            "CREATE USER 'x'@'%' IDENTIFIED BY 'pwd'",
+            "GRANT SELECT ON db.* TO 'u'@'%'",
+        ):
+            r = v.validate(sql)
+            assert r.allowed is False, f"Expected blocked: {sql}"
 
 
 # -- Dry Run ------------------------------------------------------------------

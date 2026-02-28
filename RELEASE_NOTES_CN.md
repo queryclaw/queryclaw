@@ -4,6 +4,20 @@
 
 ---
 
+## 0.5.8 (2026-02-28)
+
+### 安全
+
+- **隐私脱敏**：禁止泄露数据库密码、本机 IP 及凭证。工具结果、错误信息和 Agent 回复在到达用户或 LLM 前均会脱敏。
+- **禁止 SQL**：默认拦截 `ALTER USER`、`SET PASSWORD`、`CREATE USER`、`IDENTIFIED BY`、`GRANT`，防止修改密码。
+- **敏感列**：查询结果中 `password`、`pwd`、`secret`、`api_key` 等列的值会被替换为 `[REDACTED]`。
+
+### 文档
+
+- **外网访问设计**：新增 [DESIGN_EXTERNAL_ACCESS.md](docs/DESIGN_EXTERNAL_ACCESS.md)（中英双语），用于后续 web_fetch/api_call 工具设计。
+
+---
+
 ## 0.5.7 (2026-02-28)
 
 ### 功能

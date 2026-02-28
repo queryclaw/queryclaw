@@ -4,6 +4,16 @@
 
 ---
 
+## 0.5.4 (2026-02-28)
+
+### Improvements
+
+- **Token optimization**: System prompt schema section now lists only table names and row counts instead of full column definitions (~3000 tokens saved per LLM call). The LLM uses `schema_inspect` on demand for column details.
+- **Filter internal tables**: `_queryclaw_audit_log` and other internal tables are excluded from the schema summary.
+- **Compact guidelines**: Interaction guidelines condensed from 4 subsections to 8 concise rules, removing redundancy with the Skills section (~350 tokens saved).
+
+---
+
 ## 0.5.3 (2026-02-28)
 
 ### Fixes

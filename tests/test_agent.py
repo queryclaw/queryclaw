@@ -90,9 +90,7 @@ class TestContextBuilder:
         prompt = await ctx.build_system_prompt()
         assert "QueryClaw" in prompt
         assert "products" in prompt
-        assert "id" in prompt
-        assert "name" in prompt
-        assert "price" in prompt
+        assert "schema_inspect" in prompt
         assert "sqlite" in prompt.lower()
 
     async def test_build_system_prompt_empty_db(self, tmp_path):

@@ -60,7 +60,12 @@ class ContextBuilder:
         ]
 
     async def _get_schema_summary(self) -> str:
-        """Get a text summary of the database schema (cached after first call)."""
+        """Get a compact table-name-only summary of the database schema.
+
+        Only table names and row counts are included to save tokens.
+        The LLM should call `schema_inspect` to get column details when needed.
+        Internal tables (prefixed with `_queryclaw`) are excluded.
+        """
         if self._schema_cache is not None:
             return self._schema_cache
 
@@ -73,24 +78,19 @@ class ContextBuilder:
             self._schema_cache = "Database is empty (no tables)."
             return self._schema_cache
 
+        user_tables = [t for t in tables if not t.name.startswith("_queryclaw")]
+
         lines = [
             f"Database type: {self._db.db_type}",
-            f"Tables: {len(tables)}",
-            "",
+            f"Tables ({len(user_tables)}):",
         ]
 
-        for table in tables:
+        for table in user_tables:
             rows_str = f" ({table.row_count} rows)" if table.row_count is not None else ""
-            lines.append(f"## {table.name}{rows_str}")
-            try:
-                columns = await self._db.get_columns(table.name)
-                for col in columns:
-                    pk = " [PK]" if col.is_primary_key else ""
-                    null = "" if col.nullable else " NOT NULL"
-                    lines.append(f"  - {col.name}: {col.data_type}{pk}{null}")
-            except Exception:
-                lines.append("  (unable to read columns)")
-            lines.append("")
+            lines.append(f"  - {table.name}{rows_str}")
+
+        lines.append("")
+        lines.append("Use `schema_inspect` to get column details for any table before writing queries.")
 
         self._schema_cache = "\n".join(lines)
         return self._schema_cache
@@ -158,24 +158,11 @@ You are connected to a **{db_type}** database. Use the tools below to interact w
     def _get_guidelines() -> str:
         return """# Interaction Guidelines
 
-## Response Style
 - Answer in the **same language** as the user's question.
-- Be concise but thorough; include relevant SQL and data in your response.
-- Format query results as markdown tables when the result set is small; summarize large result sets with key statistics.
-- When presenting numbers, use proper formatting (e.g. thousands separators, percentages, dates).
-
-## Workflow
-- **Always inspect schema first** if you are unsure about table or column names — do not guess.
-- If the task requires multiple steps, briefly explain your plan before starting.
-- If a query fails, analyze the error message and suggest a corrected query.
-- When asked about performance, use `explain_plan` and interpret the output.
-- For complex requests (multi-table joins, migrations, bulk operations), consider breaking them into smaller steps.
-
-## Skills
-- When the user's request matches a skill's purpose (test data, data analysis, schema docs, AI columns, etc.), **call `read_skill` first** to load the workflow instructions, then follow them step by step.
-- Do not try to replicate a skill's workflow from memory — always load it fresh.
-
-## Integrity
+- Be concise; format small result sets as markdown tables, summarize large ones.
+- **Always call `schema_inspect`** before writing queries if unsure about table or column names.
+- If a query fails, analyze the error and suggest a fix.
+- For multi-step tasks, briefly explain your plan before starting.
+- When a request matches a skill, **call `read_skill` first** — do not replicate workflows from memory.
 - **Never fabricate data** — only report what the database actually returns.
-- If you are uncertain about something, say so rather than guessing.
-- When modifying data, always confirm the scope (which rows, how many) before executing."""
+- When modifying data, confirm the scope (which rows, how many) before executing."""

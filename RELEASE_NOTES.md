@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.3 (2026-02-28)
+
+### Fixes
+
+- **Debug mode**: `queryclaw chat --debug` now prints the full LLM prompt without truncation (previously each message was cut at 800 characters). The complete system prompt, including the full Database Schema section, is now visible in the log.
+
+---
+
 ## 0.5.2 (2026-02-28)
 
 ### Changes

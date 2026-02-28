@@ -155,7 +155,7 @@ class AgentLoop:
         while iteration < self.max_iterations:
             iteration += 1
 
-            # Log the prompt sent to the LLM on each call (chat mode only)
+            # Log the full prompt sent to the LLM on each call (chat mode only, no truncation)
             if log_prompt:
                 def _format_msg(m: dict[str, Any]) -> str:
                     role = m.get("role", "?")
@@ -163,7 +163,7 @@ class AgentLoop:
                     if content is None and "tool_calls" in m:
                         return f"[{role}] tool_calls={m['tool_calls']}"
                     s = str(content) if content is not None else ""
-                    return f"[{role}] {s[:800]}{'...' if len(s) > 800 else ''}"
+                    return f"[{role}] {s}"
 
                 logger.info(
                     "LLM prompt (iteration {}):\n{}",

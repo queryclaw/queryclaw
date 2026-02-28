@@ -4,6 +4,20 @@
 
 ---
 
+## 0.5.11 (2026-02-28)
+
+### 功能
+
+- **定时任务（Cron + Heartbeat）**：支持按固定时间（`at HH:MM`、`every Nm/Nh`、`cron 5-field`）或周期健康检查执行 prompt。结果可广播到飞书/钉钉群或回退到日志。
+- **APScheduler 集成**：Cron 使用 `AsyncIOScheduler`；Heartbeat 使用间隔循环。
+
+### 文档
+
+- **用户手册**：Cron、Heartbeat 配置，调度格式，输出路由。
+- **设计文档**：[DESIGN_SCHEDULER.md](docs/zh/DESIGN_SCHEDULER.md)（中英双语）。
+
+---
+
 ## 0.5.10 (2026-02-28)
 
 ### 安全

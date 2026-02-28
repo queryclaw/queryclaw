@@ -275,10 +275,14 @@ async def _run_serve(config: Config) -> None:
     """Run the multi-channel serve mode."""
     bus = MessageBus()
     manager = ChannelManager(config, bus)
+    cron_or_heartbeat = config.cron.enabled or config.heartbeat.enabled
 
-    if not manager.enabled_channels:
+    if not manager.enabled_channels and not cron_or_heartbeat:
         console.print("[red]Error:[/red] No channels enabled. Configure feishu or dingtalk in config.")
         raise typer.Exit(code=1)
+
+    if cron_or_heartbeat and not manager.enabled_channels:
+        console.print("[yellow]Warning:[/yellow] Cron/heartbeat enabled but no channels. Output will be logged only.")
 
     provider = _make_provider(config)
     adapter = await AdapterRegistry.create_and_connect(**config.database.model_dump())
@@ -314,11 +318,28 @@ async def _run_serve(config: Config) -> None:
         manager_task = asyncio.create_task(manager.start_all())
         agent_task = asyncio.create_task(agent.run())
 
+        cron_svc = None
+        heartbeat_svc = None
+        cron_task = asyncio.create_task(asyncio.sleep(0))
+        heartbeat_task = asyncio.create_task(asyncio.sleep(0))
+        if config.cron.enabled:
+            from queryclaw.scheduler.cron_service import CronService
+            cron_svc = CronService(bus, config.cron)
+            cron_task = asyncio.create_task(cron_svc.start())
+        if config.heartbeat.enabled:
+            from queryclaw.scheduler.heartbeat_service import HeartbeatService
+            heartbeat_svc = HeartbeatService(bus, config.heartbeat)
+            heartbeat_task = asyncio.create_task(heartbeat_svc.start())
+
         try:
-            await asyncio.gather(manager_task, agent_task)
+            await asyncio.gather(manager_task, agent_task, cron_task, heartbeat_task)
         except asyncio.CancelledError:
             pass
         finally:
+            if cron_svc:
+                cron_svc.stop()
+            if heartbeat_svc:
+                heartbeat_svc.stop()
             agent.stop()
             await manager.stop_all()
     finally:

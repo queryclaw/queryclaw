@@ -83,6 +83,8 @@ class FeishuConfig(Base):
     encrypt_key: str = ""  # Encrypt Key for event subscription (optional)
     verification_token: str = ""  # Verification Token for event subscription (optional)
     allow_from: list[str] = Field(default_factory=list)  # Allowed user open_ids
+    cron_chat_id: str = ""  # Chat ID for cron/heartbeat broadcast (open_chat_id)
+    heartbeat_chat_id: str = ""  # Chat ID for heartbeat broadcast; falls back to cron_chat_id
 
 
 class DingTalkConfig(Base):
@@ -92,6 +94,9 @@ class DingTalkConfig(Base):
     client_id: str = ""  # AppKey
     client_secret: str = ""  # AppSecret
     allow_from: list[str] = Field(default_factory=list)  # Allowed staff_ids
+    cron_chat_id: str = ""  # Conversation ID or user ID for cron/heartbeat broadcast
+    heartbeat_chat_id: str = ""  # Falls back to cron_chat_id
+    cron_conversation_type: str = "2"  # "1"=1:1 (userIds), "2"=group (openConversationId)
 
 
 class ChannelsConfig(Base):
@@ -111,6 +116,35 @@ class ExternalAccessConfig(Base):
     block_file: bool = True
 
 
+class CronJobConfig(Base):
+    """Single cron job definition."""
+
+    id: str = ""
+    schedule: str = ""  # "at 09:00", "every 1h", "cron 0 9 * * 1"
+    prompt: str = ""
+    enabled: bool = True
+
+
+class CronConfig(Base):
+    """Cron configuration."""
+
+    enabled: bool = False
+    jobs: list[CronJobConfig] = Field(default_factory=list)
+    default_chat_id: str = ""  # If set, use for all channels when broadcasting
+
+
+class HeartbeatConfig(Base):
+    """Heartbeat configuration."""
+
+    enabled: bool = False
+    interval_minutes: int = 30
+    prompt: str = (
+        "Check database health: slow queries, disk space, locks, anomalies. "
+        "Report only if action needed."
+    )
+    default_chat_id: str = ""
+
+
 class Config(BaseSettings):
     """Root configuration for QueryClaw."""
 
@@ -120,6 +154,8 @@ class Config(BaseSettings):
     safety: SafetyConfig = Field(default_factory=SafetyConfig)
     channels: ChannelsConfig = Field(default_factory=ChannelsConfig)
     external_access: ExternalAccessConfig = Field(default_factory=ExternalAccessConfig)
+    cron: CronConfig = Field(default_factory=CronConfig)
+    heartbeat: HeartbeatConfig = Field(default_factory=HeartbeatConfig)
 
     model_config = ConfigDict(env_prefix="QUERYCLAW_", env_nested_delimiter="__")
 

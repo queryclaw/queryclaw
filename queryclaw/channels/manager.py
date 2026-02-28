@@ -66,11 +66,11 @@ class ChannelManager:
 
     async def start_all(self) -> None:
         """Start all channels and the outbound dispatcher."""
+        self._dispatch_task = asyncio.create_task(self._dispatch_outbound())
+
         if not self.channels:
             logger.warning("No channels enabled")
             return
-
-        self._dispatch_task = asyncio.create_task(self._dispatch_outbound())
 
         tasks = []
         for name, channel in self.channels.items():
@@ -97,6 +97,18 @@ class ChannelManager:
             except Exception as e:
                 logger.error("Error stopping {}: {}", name, e)
 
+    def _get_broadcast_chat_id(self, channel_name: str, source: str) -> str | None:
+        """Get chat_id for cron/heartbeat broadcast to a channel. Returns None if not configured."""
+        ch_cfg = getattr(self.config.channels, channel_name, None)
+        if not ch_cfg:
+            return None
+        if source == "heartbeat":
+            chat_id = getattr(ch_cfg, "heartbeat_chat_id", "") or getattr(ch_cfg, "cron_chat_id", "")
+        else:
+            chat_id = getattr(ch_cfg, "cron_chat_id", "")
+        default = getattr(getattr(self.config, source, None), "default_chat_id", "") or ""
+        return chat_id or default or None
+
     async def _dispatch_outbound(self) -> None:
         """Dispatch outbound messages to the appropriate channel."""
         logger.info("Outbound dispatcher started")
@@ -108,14 +120,48 @@ class ChannelManager:
                     timeout=1.0,
                 )
 
-                channel = self.channels.get(msg.channel)
-                if channel:
-                    try:
-                        await channel.send(msg)
-                    except Exception as e:
-                        logger.error("Error sending to {}: {}", msg.channel, e)
+                if msg.channel in ("cron", "heartbeat"):
+                    sent = False
+                    for ch_name, channel in self.channels.items():
+                        chat_id = self._get_broadcast_chat_id(ch_name, msg.channel)
+                        if not chat_id:
+                            logger.debug(
+                                "Skipping {} for {}: no cron_chat_id/heartbeat_chat_id configured",
+                                ch_name,
+                                msg.channel,
+                            )
+                            continue
+                        try:
+                            meta = {**(msg.metadata or {}), "source": msg.channel}
+                            if ch_name == "dingtalk":
+                                meta["conversation_type"] = getattr(
+                                    channel.config, "cron_conversation_type", "2"
+                                )
+                            broadcast_msg = OutboundMessage(
+                                channel=ch_name,
+                                chat_id=chat_id,
+                                content=msg.content,
+                                metadata=meta,
+                            )
+                            await channel.send(broadcast_msg)
+                            sent = True
+                        except Exception as e:
+                            logger.error("Error broadcasting to {}: {}", ch_name, e)
+                    if not sent:
+                        logger.info(
+                            "[{}] No channels configured for broadcast. Output: {}",
+                            msg.channel,
+                            msg.content[:500] + ("..." if len(msg.content) > 500 else ""),
+                        )
                 else:
-                    logger.warning("Unknown channel: {}", msg.channel)
+                    channel = self.channels.get(msg.channel)
+                    if channel:
+                        try:
+                            await channel.send(msg)
+                        except Exception as e:
+                            logger.error("Error sending to {}: {}", msg.channel, e)
+                    else:
+                        logger.warning("Unknown channel: {}", msg.channel)
 
             except asyncio.TimeoutError:
                 continue

@@ -141,6 +141,8 @@ Configuration is stored in **JSON** at `~/.queryclaw/config.json` by default. Yo
 | `safety` | Safety policy: read-only mode, row limits, confirmation rules, audit. |
 | `channels` | Multi-channel output: Feishu and DingTalk configuration for `serve` mode. |
 | `external_access` | Optional external network access: enable `web_fetch` and `api_call` tools. |
+| `cron` | Scheduled jobs: run prompts at fixed times (e.g. daily index check). |
+| `heartbeat` | Periodic health check: Agent inspects database and reports anomalies. |
 
 ### Database
 
@@ -250,6 +252,8 @@ Multi-channel output for `queryclaw serve`. Enable Feishu and/or DingTalk to rec
 | `app_id`            | string | App ID from Feishu Open Platform. |
 | `app_secret`        | string | App Secret. |
 | `allow_from`        | list   | Allowed user open_ids; empty = allow all. |
+| `cron_chat_id`      | string | Chat ID for cron/heartbeat broadcast (optional). |
+| `heartbeat_chat_id` | string | Chat ID for heartbeat; falls back to cron_chat_id. |
 
 **DingTalk:**
 
@@ -259,6 +263,8 @@ Multi-channel output for `queryclaw serve`. Enable Feishu and/or DingTalk to rec
 | `client_id`         | string | AppKey from DingTalk. |
 | `client_secret`     | string | AppSecret. |
 | `allow_from`        | list   | Allowed staff_ids; empty = allow all. |
+| `cron_chat_id`      | string | Conversation or user ID for cron/heartbeat broadcast. |
+| `heartbeat_chat_id` | string | Falls back to cron_chat_id. |
 
 **Channel setup guides:**
 
@@ -307,6 +313,58 @@ When enabled, the agent can fetch web pages and call REST APIs via `web_fetch` a
 ```
 
 **Use cases:** Fetch API docs, call weather APIs, validate URLs, enrich database records with external data.
+
+### Cron
+
+Scheduled jobs run natural-language prompts at fixed times. Output is broadcast to channels (or logged if none configured).
+
+| Field             | Type   | Default | Description |
+|-------------------|--------|---------|-------------|
+| `enabled`         | bool   | `false` | Enable cron jobs. |
+| `jobs`            | list   | `[]`    | List of job definitions. |
+| `default_chat_id` | string | `""`    | Fallback chat ID when channel-specific not set. |
+
+Each job:
+
+| Field     | Type   | Description |
+|-----------|--------|-------------|
+| `id`      | string | Unique job ID. |
+| `schedule`| string | `"at 09:00"` (daily), `"every 30m"`, `"cron 0 9 * * 1"` (Mon 9am). |
+| `prompt`  | string | Natural-language prompt sent to the Agent. |
+| `enabled` | bool   | Whether this job is active. |
+
+### Heartbeat
+
+Periodic health check: the Agent inspects the database and reports only when action is needed.
+
+| Field               | Type   | Default | Description |
+|---------------------|--------|---------|-------------|
+| `enabled`           | bool   | `false` | Enable heartbeat. |
+| `interval_minutes`  | int    | `30`    | How often to run (minutes). |
+| `prompt`            | string | (default) | Prompt for health check. |
+| `default_chat_id`   | string | `""`    | Fallback chat ID. |
+
+**Channel config:** Set `cron_chat_id` and `heartbeat_chat_id` in Feishu/DingTalk config to receive cron/heartbeat output in a specific chat.
+
+**Example:**
+
+```json
+"cron": {
+  "enabled": true,
+  "jobs": [
+    {
+      "id": "daily_index_check",
+      "schedule": "at 09:00",
+      "prompt": "Check if any table with more than 100k rows lacks an index. List them.",
+      "enabled": true
+    }
+  ]
+},
+"heartbeat": {
+  "enabled": true,
+  "interval_minutes": 30
+}
+```
 
 ---
 
@@ -369,10 +427,12 @@ queryclaw serve [--config PATH]
 
 **Prerequisites:**
 
-- Enable at least one channel in config (see [Channels](#channels))
+- Enable at least one channel in config (see [Channels](#channels)), or enable cron/heartbeat (output goes to channels or log)
 - Install channel dependencies: `pip install queryclaw[feishu]` and/or `pip install queryclaw[dingtalk]`
 
 **Note:** In channel mode, when `safety.require_confirmation` is true, destructive operations prompt the user for confirmation (reply "确认" or "取消").
+
+**Cron and Heartbeat:** When `cron.enabled` or `heartbeat.enabled` is true, scheduled tasks run alongside channel mode. Results are broadcast to configured channels (set `cron_chat_id` / `heartbeat_chat_id` per channel) or logged if no channel is configured.
 
 ---
 
@@ -492,6 +552,7 @@ Skills guide the agent’s behavior for certain kinds of tasks. The agent loads 
 
 - [Feishu Setup](FEISHU_SETUP.md) | [DingTalk Setup](DINGTALK_SETUP.md)  
 - [External Access Design](DESIGN_EXTERNAL_ACCESS.md) — `web_fetch` and `api_call` tools, SSRF protection  
+- [Scheduler Design](DESIGN_SCHEDULER.md) — Cron and Heartbeat  
 - [Architecture & Implementation Plan](PLAN_ARCHITECTURE.md)  
 - [Skills Roadmap](SKILLS_ROADMAP.md)  
 - [Phase 1 Plan (Archive)](PLAN_PHASE1_ARCHIVE.md) | [Phase 2 Plan (Archive)](PLAN_PHASE2_ARCHIVE.md)

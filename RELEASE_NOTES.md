@@ -4,6 +4,20 @@
 
 ---
 
+## 0.5.11 (2026-02-28)
+
+### Features
+
+- **Scheduled tasks (Cron + Heartbeat)**: Run prompts on fixed schedules (`at HH:MM`, `every Nm/Nh`, `cron 5-field`) or periodic health checks. Results broadcast to Feishu/DingTalk channels or fall back to logging.
+- **APScheduler integration**: `AsyncIOScheduler` for cron jobs; heartbeat loop for interval-based health checks.
+
+### Documentation
+
+- **User Manual**: Cron and Heartbeat config, schedule formats, output routing.
+- **Design doc**: [DESIGN_SCHEDULER.md](docs/DESIGN_SCHEDULER.md) (en + zh).
+
+---
+
 ## 0.5.10 (2026-02-28)
 
 ### Security

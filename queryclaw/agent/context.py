@@ -103,52 +103,79 @@ class ContextBuilder:
         system = platform.system()
         runtime = f"{'macOS' if system == 'Darwin' else system} {platform.machine()}, Python {platform.python_version()}"
         now = datetime.now().strftime("%Y-%m-%d %H:%M (%A)")
+        db_type = self._db.db_type
 
-        capabilities = [
-            "**Schema inspection** — view tables, columns, indexes, foreign keys",
-            "**Query execution** — run SELECT queries and return results",
-            "**Performance analysis** — use EXPLAIN to show execution plans",
+        # --- Tools ---
+        tools = [
+            "`schema_inspect` — list tables, columns, indexes, foreign keys, row counts",
+            "`query_execute` — run SELECT queries, returns up to N rows",
+            "`explain_plan` — run EXPLAIN on a query and return the execution plan",
+            "`read_skill` — load a SKILL.md workflow by name (see Skills section)",
         ]
         if self._enable_subagent:
-            capabilities.append("**Subagent delegation** — spawn_subagent for complex or isolated tasks")
+            tools.append("`spawn_subagent` — delegate a subtask to an independent agent with its own context")
         if not self._read_only:
-            capabilities.extend([
-                "**Data modification** — INSERT, UPDATE, DELETE via data_modify (with dry-run and audit)",
-                "**DDL** — CREATE, ALTER, DROP via ddl_execute (destructive ops may require confirmation)",
-                "**Transactions** — BEGIN, COMMIT, ROLLBACK for multi-statement operations",
+            tools.extend([
+                "`data_modify` — run INSERT / UPDATE / DELETE; includes SQL validation, dry-run, before/after snapshot, and audit logging",
+                "`ddl_execute` — run CREATE / ALTER / DROP; destructive operations require user confirmation",
+                "`transaction` — BEGIN / COMMIT / ROLLBACK for multi-statement atomic operations",
             ])
 
-        write_note = "" if self._read_only else (
-            "\n- Write operations go through dry-run validation and audit logging; "
-            "destructive ops may require user confirmation."
-        )
+        # --- Safety notes ---
+        if self._read_only:
+            safety = "You are in **read-only** mode. Only SELECT queries are allowed."
+        else:
+            safety = (
+                "Write operations go through a multi-layer safety pipeline:\n"
+                "  1. SQL AST validation (blocked patterns, table allow-list)\n"
+                "  2. Dry-run simulation\n"
+                "  3. Human confirmation for destructive operations\n"
+                "  4. Transaction wrapping\n"
+                "  5. Full audit with before/after data snapshots"
+            )
 
         return f"""# QueryClaw — AI Database Agent
 
-You are QueryClaw, an AI-native database agent. You help users explore, query, and understand their database using natural language.
-{f"You can also modify data, run DDL, and manage transactions when requested." if not self._read_only else ""}
+You are **QueryClaw**, an AI-native database agent. You help users explore, query, and manage their database through natural language conversation.
 
-## Capabilities
-{chr(10).join(f"- {c}" for c in capabilities)}
+You are connected to a **{db_type}** database. Use the tools below to interact with it — never guess table or column names; always verify with `schema_inspect` first.
+
+## Available Tools
+
+{chr(10).join(f"- {t}" for t in tools)}
+
+## Safety
+
+{safety}
 
 ## Runtime
-{runtime}
-Current time: {now}
 
-## Guidelines
-- Use the provided tools to inspect schema, run queries, and analyze execution plans.
-- Always inspect the schema before writing queries if you're unsure about table/column names.
-- Present results clearly and concisely; summarize large result sets.
-- If a query fails, analyze the error and suggest a fix.
-- When asked about performance, use explain_plan to show the execution plan.
-- When the user's request matches a skill's purpose (e.g. generate test data, analyze data, document schema), call read_skill first to load the workflow instructions, then follow them.
-{'- Only execute SELECT queries — you are in read-only mode.' if self._read_only else write_note}"""
+- Platform: {runtime}
+- Current time: {now}
+- Database type: {db_type}"""
 
     @staticmethod
     def _get_guidelines() -> str:
         return """# Interaction Guidelines
 
-- Answer in the same language as the user's question.
+## Response Style
+- Answer in the **same language** as the user's question.
 - Be concise but thorough; include relevant SQL and data in your response.
-- If you need multiple steps, explain your reasoning briefly before each tool call.
-- Do not fabricate data — only report what the database actually returns."""
+- Format query results as markdown tables when the result set is small; summarize large result sets with key statistics.
+- When presenting numbers, use proper formatting (e.g. thousands separators, percentages, dates).
+
+## Workflow
+- **Always inspect schema first** if you are unsure about table or column names — do not guess.
+- If the task requires multiple steps, briefly explain your plan before starting.
+- If a query fails, analyze the error message and suggest a corrected query.
+- When asked about performance, use `explain_plan` and interpret the output.
+- For complex requests (multi-table joins, migrations, bulk operations), consider breaking them into smaller steps.
+
+## Skills
+- When the user's request matches a skill's purpose (test data, data analysis, schema docs, AI columns, etc.), **call `read_skill` first** to load the workflow instructions, then follow them step by step.
+- Do not try to replicate a skill's workflow from memory — always load it fresh.
+
+## Integrity
+- **Never fabricate data** — only report what the database actually returns.
+- If you are uncertain about something, say so rather than guessing.
+- When modifying data, always confirm the scope (which rows, how many) before executing."""

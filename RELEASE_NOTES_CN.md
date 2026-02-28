@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.2 (2026-02-28)
+
+### 变更
+
+- **系统提示词优化**：完善 Agent 身份与交互指引。身份部分现包含数据库类型、工具列表及说明（schema_inspect、query_execute、explain_plan、read_skill、data_modify、ddl_execute、transaction、spawn_subagent），以及写模式下的安全管线说明。指引拆分为「响应风格」「工作流」「技能」「完整性」，并补充结果格式、必须通过 read_skill 加载技能、修改前确认范围等说明。
+
+---
+
 ## 0.5.1 (2026-02-28)
 
 ### 功能

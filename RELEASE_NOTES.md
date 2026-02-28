@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.2 (2026-02-28)
+
+### Changes
+
+- **System prompt improvements**: Refined agent identity and guidelines. Identity now includes database type, explicit tool list with descriptions (schema_inspect, query_execute, explain_plan, read_skill, data_modify, ddl_execute, transaction, spawn_subagent), and a clear safety pipeline for write mode. Guidelines reorganized into Response Style, Workflow, Skills, and Integrity; added instructions for formatting results, always loading skills via read_skill, and confirming scope before modifications.
+
+---
+
 ## 0.5.1 (2026-02-28)
 
 ### Features

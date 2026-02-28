@@ -101,6 +101,16 @@ class ChannelsConfig(Base):
     dingtalk: DingTalkConfig = Field(default_factory=DingTalkConfig)
 
 
+class ExternalAccessConfig(Base):
+    """External network access configuration."""
+
+    enabled: bool = False
+    timeout_seconds: int = 10
+    max_response_chars: int = 50000
+    block_local: bool = True
+    block_file: bool = True
+
+
 class Config(BaseSettings):
     """Root configuration for QueryClaw."""
 
@@ -109,6 +119,7 @@ class Config(BaseSettings):
     agent: AgentConfig = Field(default_factory=AgentConfig)
     safety: SafetyConfig = Field(default_factory=SafetyConfig)
     channels: ChannelsConfig = Field(default_factory=ChannelsConfig)
+    external_access: ExternalAccessConfig = Field(default_factory=ExternalAccessConfig)
 
     model_config = ConfigDict(env_prefix="QUERYCLAW_", env_nested_delimiter="__")
 

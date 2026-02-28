@@ -12,7 +12,7 @@
 ![Demo](docs/assets/demo.gif)
 -->
 
-**7 tools** | **7 skills** | **4 databases** | **243+ tests** | **Multi-LLM via LiteLLM**
+**9 tools** | **7 skills** | **4 databases** | **243+ tests** | **Multi-LLM via LiteLLM**
 
 ---
 
@@ -56,6 +56,7 @@ QueryClaw sits in the sweet spot: **an intelligent agent that understands both y
 - **Multi-channel** — Use it in the terminal (`queryclaw chat`) or deploy to team messaging (`queryclaw serve`) for Feishu / DingTalk with interactive confirmation
 - **Extensible skills** — Add new capabilities via `SKILL.md` markdown files — no code changes, no redeployment. The agent loads skills on demand
 - **Multi-database** — MySQL, PostgreSQL, SQLite, SeekDB (OceanBase) with a clean adapter interface for adding more
+- **External access** (optional) — Fetch web pages and call REST APIs when enabled; SSRF protection, timeout, and size limits keep it safe
 
 ### What You Can Do
 
@@ -66,6 +67,7 @@ QueryClaw sits in the sweet spot: **an intelligent agent that understands both y
 > "Find orphaned records and fix foreign key violations"
 > "Based on product descriptions, generate a one-sentence summary column"
 > "What tables are related to the orders system? Draw the relationships"
+> "Fetch the API docs at https://example.com/api and summarize the endpoints" *(requires external access)*
 ```
 
 ## Installation
@@ -242,6 +244,7 @@ QueryClaw's real power comes from its skill system. Each skill teaches the Agent
 ### Phase 4: Multi-Channel Output *(completed)*
 
 - Message bus + bidirectional channels (Feishu, DingTalk)
+- External access: `web_fetch` and `api_call` tools (optional, SSRF-protected)
 - `queryclaw serve` — run Agent in channel mode; ask questions in Feishu/DingTalk and get responses
 - Optional dependencies: `queryclaw[feishu]`, `queryclaw[dingtalk]`
 - Interactive confirmation in channels — reply "confirm" or "cancel" to approve or reject destructive operations

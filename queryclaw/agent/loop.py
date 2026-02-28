@@ -33,6 +33,8 @@ from queryclaw.tools.modify import DataModifyTool
 from queryclaw.tools.ddl import DDLExecuteTool
 from queryclaw.tools.transaction import TransactionTool
 
+from queryclaw.config.schema import ExternalAccessConfig
+
 ConfirmationCallback = Callable[[str, str], Awaitable[bool]]
 
 
@@ -60,6 +62,7 @@ class AgentLoop:
         enable_subagent: bool = True,
         confirmation_callback: ConfirmationCallback | None = None,
         bus: Any = None,
+        external_access_config: ExternalAccessConfig | None = None,
     ) -> None:
         self.provider = provider
         self.db = db
@@ -73,10 +76,12 @@ class AgentLoop:
 
         self.tools = ToolRegistry()
         self.skills = SkillsLoader()
+        ext_cfg = external_access_config
         self.context = ContextBuilder(
             db, self.skills,
             read_only=self.safety_policy.read_only,
             enable_subagent=enable_subagent,
+            external_access_enabled=bool(ext_cfg and ext_cfg.enabled),
         )
         self.memory = MemoryStore()
         self.subagent_spawner = SubAgentSpawner(provider, db, model=self.model)
@@ -84,9 +89,14 @@ class AgentLoop:
         self._running = False
         self._current_msg: Any = None
 
-        self._register_default_tools(max_query_rows, enable_subagent)
+        self._register_default_tools(max_query_rows, enable_subagent, ext_cfg)
 
-    def _register_default_tools(self, max_query_rows: int, enable_subagent: bool) -> None:
+    def _register_default_tools(
+        self,
+        max_query_rows: int,
+        enable_subagent: bool,
+        external_access_config: ExternalAccessConfig | None = None,
+    ) -> None:
         """Register the built-in database tools."""
         self.tools.register(ReadSkillTool(self.skills))
         self.tools.register(SchemaInspectTool(self.db))
@@ -94,6 +104,14 @@ class AgentLoop:
         self.tools.register(ExplainPlanTool(self.db))
         if enable_subagent:
             self.tools.register(SpawnSubAgentTool(self.subagent_spawner))
+
+        if external_access_config and external_access_config.enabled:
+            from queryclaw.safety.external import ExternalAccessPolicy
+            from queryclaw.tools.web_fetch import WebFetchTool
+            from queryclaw.tools.api_call import ApiCallTool
+            policy = ExternalAccessPolicy(external_access_config)
+            self.tools.register(WebFetchTool(policy, external_access_config))
+            self.tools.register(ApiCallTool(policy, external_access_config))
 
         if self.safety_policy.allows_write():
             validator = QueryValidator(blocked_patterns=self.safety_policy.blocked_patterns)

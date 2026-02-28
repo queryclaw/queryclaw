@@ -2,7 +2,7 @@
 
 > [中文版](zh/USER_MANUAL.md)
 
-**Version 0.4.x** — Database agent with write operations, safety layer, PostgreSQL support, subagent system, and multi-channel output (Feishu, DingTalk)
+**Version 0.5.x** — Database agent with write operations, safety layer, PostgreSQL support, subagent system, multi-channel output (Feishu, DingTalk), and optional external access (web fetch, API calls)
 
 This manual describes how to install, configure, and use QueryClaw to chat with your database in natural language.
 
@@ -27,12 +27,13 @@ This manual describes how to install, configure, and use QueryClaw to chat with 
 
 QueryClaw is an **AI-native database agent** that lets you ask questions about your database in plain language. The agent uses a **ReACT loop** (Reasoning + Acting): it inspects the schema, runs read-only SQL, and explains execution plans — all through natural language.
 
-**Current version (0.4.x)** supports:
+**Current version (0.5.x)** supports:
 
-- **Databases:** SQLite, MySQL, PostgreSQL  
+- **Databases:** SQLite, MySQL, PostgreSQL, SeekDB  
 - **LLM providers:** OpenRouter, Anthropic, OpenAI, DeepSeek, Gemini, DashScope, Moonshot (via [LiteLLM](https://github.com/BerriAI/litellm))  
 - **Read tools:** Schema inspection, read-only query execution, EXPLAIN plan, subagent spawning  
 - **Write tools:** `data_modify` (INSERT/UPDATE/DELETE), `ddl_execute` (CREATE/ALTER/DROP), `transaction` (BEGIN/COMMIT/ROLLBACK)  
+- **External tools** (optional): `web_fetch` (fetch URL content), `api_call` (REST API calls) — enabled via config, SSRF-protected  
 - **Safety layer:** Policy engine, SQL AST validator, dry-run engine, human confirmation, audit logger  
 - **Skills:** Data Analysis, Schema Documenter, Query Translator, Data Detective, AI Column, Test Data Factory  
 - **CLI:** `onboard` (create config), `chat` (interactive or single-turn), `serve` (multi-channel mode)
@@ -139,6 +140,7 @@ Configuration is stored in **JSON** at `~/.queryclaw/config.json` by default. Yo
 | `agent` | Model name, iteration limit, temperature, and token limit. |
 | `safety` | Safety policy: read-only mode, row limits, confirmation rules, audit. |
 | `channels` | Multi-channel output: Feishu and DingTalk configuration for `serve` mode. |
+| `external_access` | Optional external network access: enable `web_fetch` and `api_call` tools. |
 
 ### Database
 
@@ -282,6 +284,30 @@ Multi-channel output for `queryclaw serve`. Enable Feishu and/or DingTalk to rec
 }
 ```
 
+### External Access
+
+When enabled, the agent can fetch web pages and call REST APIs via `web_fetch` and `api_call` tools. **Off by default** for security.
+
+| Field               | Type   | Default   | Description |
+|---------------------|--------|-----------|-------------|
+| `enabled`           | bool   | `false`   | Enable external access tools. |
+| `timeout_seconds`   | int    | `10`      | Request timeout. |
+| `max_response_chars`| int   | `50000`   | Max characters in response (prevents huge context). |
+| `block_local`       | bool   | `true`    | Block localhost and private IPs (SSRF prevention). |
+| `block_file`        | bool   | `true`    | Block `file://` URLs. |
+
+**Example:**
+
+```json
+"external_access": {
+  "enabled": true,
+  "timeout_seconds": 10,
+  "max_response_chars": 50000
+}
+```
+
+**Use cases:** Fetch API docs, call weather APIs, validate URLs, enrich database records with external data.
+
 ---
 
 ## Commands Reference
@@ -400,6 +426,15 @@ The agent uses these tools automatically during the ReACT loop. You do not call 
 | **explain_plan**    | Show the execution plan (EXPLAIN) for a given SQL query. |
 | **spawn_subagent**  | Spawn a focused subagent to handle a specific subtask (e.g. multi-table analysis). |
 
+### External Tools (optional)
+
+Available when `external_access.enabled` is `true`. SSRF-protected; only public http/https URLs are allowed.
+
+| Tool                | Description |
+|---------------------|-------------|
+| **web_fetch**       | Fetch content from a URL. Returns text (HTML stripped), JSON, or raw. Use for web pages, API docs, or public APIs. |
+| **api_call**        | Make REST API calls (GET, POST, PUT, PATCH, DELETE). Use for weather APIs, webhooks, or any HTTP API. |
+
 ### Write Tools
 
 Write tools are available when `safety.read_only` is set to `false`. They go through the full safety pipeline (policy check → SQL validation → dry-run → optional human confirmation → transaction wrapping → audit logging).
@@ -456,6 +491,7 @@ Skills guide the agent’s behavior for certain kinds of tasks. The agent loads 
 ## See Also
 
 - [Feishu Setup](FEISHU_SETUP.md) | [DingTalk Setup](DINGTALK_SETUP.md)  
+- [External Access Design](DESIGN_EXTERNAL_ACCESS.md) — `web_fetch` and `api_call` tools, SSRF protection  
 - [Architecture & Implementation Plan](PLAN_ARCHITECTURE.md)  
 - [Skills Roadmap](SKILLS_ROADMAP.md)  
 - [Phase 1 Plan (Archive)](PLAN_PHASE1_ARCHIVE.md) | [Phase 2 Plan (Archive)](PLAN_PHASE2_ARCHIVE.md)

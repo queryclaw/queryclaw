@@ -166,6 +166,7 @@ async def _run_chat(config: Config, message: str | None, render_markdown: bool, 
             max_tokens=config.agent.max_tokens,
             safety_policy=safety,
             confirmation_callback=_confirm_operation,
+            external_access_config=config.external_access,
         )
 
         if message:
@@ -306,6 +307,7 @@ async def _run_serve(config: Config) -> None:
             safety_policy=safety,
             confirmation_callback=channel_confirm,
             bus=bus,
+            external_access_config=config.external_access,
         )
         agent_ref[0] = agent
 

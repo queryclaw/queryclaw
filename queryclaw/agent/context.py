@@ -23,12 +23,14 @@ class ContextBuilder:
         skills: SkillsLoader | None = None,
         read_only: bool = True,
         enable_subagent: bool = True,
+        external_access_enabled: bool = False,
     ) -> None:
         self._db = db
         self._skills = skills or SkillsLoader()
         self._schema_cache: str | None = None
         self._read_only = read_only
         self._enable_subagent = enable_subagent
+        self._external_access_enabled = external_access_enabled
 
     async def build_system_prompt(self) -> str:
         """Build the full system prompt with identity, schema, and skills."""
@@ -114,6 +116,11 @@ class ContextBuilder:
         ]
         if self._enable_subagent:
             tools.append("`spawn_subagent` — delegate a subtask to an independent agent with its own context")
+        if self._external_access_enabled:
+            tools.extend([
+                "`web_fetch` — fetch URL content (text or JSON)",
+                "`api_call` — make REST API calls (GET, POST, PUT, PATCH, DELETE)",
+            ])
         if not self._read_only:
             tools.extend([
                 "`data_modify` — run INSERT / UPDATE / DELETE; includes SQL validation, dry-run, before/after snapshot, and audit logging",

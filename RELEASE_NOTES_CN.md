@@ -4,6 +4,20 @@
 
 ---
 
+## 0.5.9 (2026-02-26)
+
+### 功能
+
+- **外网访问**：配置中 `external_access.enabled` 为 true 时，可选启用 `web_fetch`、`api_call` 工具。可抓取网页、调用 REST API、用外部数据丰富数据库记录。
+- **SSRF 防护**：`ExternalAccessPolicy` 拦截 localhost、私有 IP、`file://`、`ftp://`。超时与响应大小限制。
+
+### 文档
+
+- **README**：更新工具数量、外网访问说明、路线图。
+- **用户手册**：新增 `external_access` 配置项、`web_fetch` 与 `api_call` 工具说明。
+
+---
+
 ## 0.5.8 (2026-02-28)
 
 ### 安全
@@ -14,7 +28,7 @@
 
 ### 文档
 
-- **外网访问设计**：新增 [DESIGN_EXTERNAL_ACCESS.md](docs/DESIGN_EXTERNAL_ACCESS.md)（中英双语），用于后续 web_fetch/api_call 工具设计。
+- **外网访问设计**：新增 [DESIGN_EXTERNAL_ACCESS.md](docs/DESIGN_EXTERNAL_ACCESS.md)（中英双语），用于 web_fetch/api_call 工具设计（v0.5.9 已实现）。
 
 ---
 

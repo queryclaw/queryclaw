@@ -1,6 +1,6 @@
 [project]
 name = "queryclaw"
-version = "0.5.8"
+version = "0.5.9"
 description = "AI-Native Database Agent for Safe & Autonomous Operations — Text-to-SQL with safety guardrails"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "typer>=0.9",
     "rich>=13.0",
+    "httpx>=0.28.0",
     "prompt-toolkit>=3.0",
     "pydantic>=2.0",
     "pydantic-settings>=2.0",

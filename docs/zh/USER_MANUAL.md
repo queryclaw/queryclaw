@@ -1,6 +1,6 @@
 # QueryClaw 用户手册
 
-**版本 0.4.x** — 带写操作、安全层、PostgreSQL 支持、子代理系统和多通道输出（飞书、钉钉）的数据库 Agent
+**版本 0.5.x** — 带写操作、安全层、PostgreSQL 支持、子代理系统、多通道输出（飞书、钉钉）及可选外网访问（网页抓取、API 调用）的数据库 Agent
 
 本文介绍如何安装、配置和使用 QueryClaw，通过自然语言与数据库对话。
 
@@ -25,12 +25,13 @@
 
 QueryClaw 是一个 **AI 原生数据库 Agent**，可以用自然语言向数据库提问。Agent 使用 **ReACT 循环**（推理 + 行动）：查看表结构、执行只读 SQL、查看执行计划，均通过自然语言完成。
 
-**当前版本（0.4.x）** 支持：
+**当前版本（0.5.x）** 支持：
 
-- **数据库：** SQLite、MySQL、PostgreSQL  
+- **数据库：** SQLite、MySQL、PostgreSQL、SeekDB  
 - **LLM 提供方：** OpenRouter、Anthropic、OpenAI、DeepSeek、Gemini、DashScope、Moonshot（通过 [LiteLLM](https://github.com/BerriAI/litellm)）  
 - **只读工具：** 结构查看、只读查询执行、EXPLAIN 计划、子代理委派  
 - **写入工具：** `data_modify`（INSERT/UPDATE/DELETE）、`ddl_execute`（CREATE/ALTER/DROP）、`transaction`（BEGIN/COMMIT/ROLLBACK）  
+- **外网工具**（可选）：`web_fetch`（抓取 URL 内容）、`api_call`（REST API 调用）— 通过配置启用，带 SSRF 防护  
 - **安全层：** 策略引擎、SQL AST 校验器、试跑引擎、人工确认、审计日志  
 - **技能：** 数据分析、Schema 文档生成、查询翻译器、数据侦探、AI 列、测试数据工厂  
 - **CLI：** `onboard`（创建配置）、`chat`（交互或单轮对话）、`serve`（多通道模式）
@@ -130,13 +131,14 @@ queryclaw --version
 
 ### 配置结构
 
-| 节点       | 说明 |
-|------------|------|
-| `database` | 要连接的数据库（SQLite/MySQL/PostgreSQL）的连接信息。 |
-| `providers`| 各 LLM 提供方的 API Key 及可选 base URL。 |
-| `agent`    | 模型名、迭代次数、温度、最大 token 等。 |
-| `safety`   | 安全策略：只读模式、行数限制、确认规则、审计。 |
-| `channels` | 多通道输出：飞书、钉钉配置（用于 `serve` 模式）。 |
+| 节点             | 说明 |
+|------------------|------|
+| `database`       | 要连接的数据库（SQLite/MySQL/PostgreSQL/SeekDB）的连接信息。 |
+| `providers`      | 各 LLM 提供方的 API Key 及可选 base URL。 |
+| `agent`          | 模型名、迭代次数、温度、最大 token 等。 |
+| `safety`         | 安全策略：只读模式、行数限制、确认规则、审计。 |
+| `channels`       | 多通道输出：飞书、钉钉配置（用于 `serve` 模式）。 |
+| `external_access`| 可选外网访问：启用 `web_fetch`、`api_call` 工具。 |
 
 ### 数据库 (database)
 
@@ -258,6 +260,19 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 | `blocked_patterns`   | list       | `["DROP DATABASE", "DROP SCHEMA"]` | 始终拒绝的 SQL 模式。 |
 | `audit_enabled`      | bool       | `true`                           | 将所有操作写入审计日志表。 |
 
+**示例：**
+
+```json
+"safety": {
+  "read_only": true,
+  "max_affected_rows": 1000,
+  "require_confirmation": true,
+  "allowed_tables": null,
+  "blocked_patterns": ["DROP DATABASE", "DROP SCHEMA"],
+  "audit_enabled": true
+}
+```
+
 ### 通道 (channels)
 
 多通道输出，用于 `queryclaw serve`。启用飞书和/或钉钉后，可在对应应用中提问并接收 Agent 回复。
@@ -304,18 +319,29 @@ Agent 会根据 **模型名** 自动选择提供方（如 `openrouter/...`、`an
 }
 ```
 
+### 外网访问 (external_access)
+
+启用后，Agent 可通过 `web_fetch`、`api_call` 抓取网页、调用 REST API。**默认关闭**，需在配置中显式启用。
+
+| 字段                 | 类型   | 默认值   | 说明 |
+|----------------------|--------|----------|------|
+| `enabled`            | bool   | `false`  | 是否启用外网访问工具。 |
+| `timeout_seconds`    | int    | `10`     | 请求超时时间（秒）。 |
+| `max_response_chars` | int    | `50000`  | 响应最大字符数（防止上下文过大）。 |
+| `block_local`        | bool   | `true`   | 禁止 localhost 及私有 IP（SSRF 防护）。 |
+| `block_file`         | bool   | `true`   | 禁止 `file://` 协议。 |
+
 **示例：**
 
 ```json
-"safety": {
-  "read_only": true,
-  "max_affected_rows": 1000,
-  "require_confirmation": true,
-  "allowed_tables": null,
-  "blocked_patterns": ["DROP DATABASE", "DROP SCHEMA"],
-  "audit_enabled": true
+"external_access": {
+  "enabled": true,
+  "timeout_seconds": 10,
+  "max_response_chars": 50000
 }
 ```
+
+**典型用途：** 抓取 API 文档、调用天气 API、校验 URL、用外部数据丰富数据库记录。
 
 ---
 
@@ -409,6 +435,15 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 | **explain_plan**    | 对给定 SQL 显示执行计划（EXPLAIN）。 |
 | **spawn_subagent**  | 生成专注子代理来处理特定子任务（如多表分析）。 |
 
+### 外网工具（可选）
+
+当 `external_access.enabled` 为 `true` 时可用。带 SSRF 防护，仅允许公网 http/https URL。
+
+| 工具                 | 说明 |
+|---------------------|------|
+| **web_fetch**       | 抓取 URL 内容。返回纯文本（去除 HTML）、JSON 或原始内容。用于网页、API 文档或公开 API。 |
+| **api_call**        | 发起 REST API 调用（GET、POST、PUT、PATCH、DELETE）。用于天气 API、Webhook 或任意 HTTP API。 |
+
 ### 写入工具
 
 当 `safety.read_only` 设为 `false` 时可用。写入操作会经过完整安全流水线（策略检查 → SQL 校验 → 试跑 → 可选人工确认 → 事务包裹 → 审计日志）。
@@ -465,6 +500,7 @@ Agent 在 ReACT 循环中会自动调用以下工具，用户无需直接调用�
 ## 相关文档
 
 - [飞书通道对接](FEISHU_SETUP.md) | [钉钉通道对接](DINGTALK_SETUP.md)  
+- [外网访问设计](DESIGN_EXTERNAL_ACCESS.md)（[英文](../DESIGN_EXTERNAL_ACCESS.md)）— `web_fetch`、`api_call` 工具与 SSRF 防护  
 - [架构与实现计划](PLAN_ARCHITECTURE.md)（[英文](../PLAN_ARCHITECTURE.md)）  
 - [技能路线图](SKILLS_ROADMAP.md)（[英文](../SKILLS_ROADMAP.md)）  
 - [Phase 1 计划归档](PLAN_PHASE1_ARCHIVE.md) | [Phase 2 计划归档](PLAN_PHASE2_ARCHIVE.md)

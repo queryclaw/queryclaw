@@ -4,6 +4,20 @@
 
 ---
 
+## 0.5.9 (2026-02-26)
+
+### Features
+
+- **External access**: Optional `web_fetch` and `api_call` tools when `external_access.enabled` is true in config. Fetch web pages, call REST APIs, enrich database records with external data.
+- **SSRF protection**: `ExternalAccessPolicy` blocks localhost, private IPs, `file://`, `ftp://`. Timeout and max response size limits.
+
+### Documentation
+
+- **README**: Updated tool count, external access feature, roadmap.
+- **User Manual**: Added `external_access` config section, `web_fetch` and `api_call` tool descriptions.
+
+---
+
 ## 0.5.8 (2026-02-28)
 
 ### Security
@@ -14,7 +28,7 @@
 
 ### Documentation
 
-- **External access design**: Added [DESIGN_EXTERNAL_ACCESS.md](docs/DESIGN_EXTERNAL_ACCESS.md) (en + zh) for future web_fetch/api_call tools.
+- **External access design**: Added [DESIGN_EXTERNAL_ACCESS.md](docs/DESIGN_EXTERNAL_ACCESS.md) (en + zh) for web_fetch/api_call tools (implemented in v0.5.9).
 
 ---
 

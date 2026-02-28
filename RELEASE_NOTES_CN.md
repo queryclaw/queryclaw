@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.7 (2026-02-28)
+
+### 功能
+
+- **钉钉群聊支持**：钉钉通道现自动识别会话类型（`conversationType`），群聊使用 `/v1.0/robot/groupMessages/send`，单聊使用 `/v1.0/robot/oToMessages/batchSend`。修复在群聊场景下的 `chatbotId.notAllow.sendOTO` 错误。
+
+---
+
 ## 0.5.6 (2026-02-28)
 
 ### 优化

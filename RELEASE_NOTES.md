@@ -4,6 +4,14 @@
 
 ---
 
+## 0.5.7 (2026-02-28)
+
+### Features
+
+- **DingTalk group chat support**: The DingTalk channel now auto-detects conversation type (`conversationType`) and uses the correct API — `/v1.0/robot/groupMessages/send` for group chats, `/v1.0/robot/oToMessages/batchSend` for 1:1 chats. Fixes `chatbotId.notAllow.sendOTO` errors when the bot is used in group conversations.
+
+---
+
 ## 0.5.6 (2026-02-28)
 
 ### Improvements

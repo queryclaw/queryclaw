@@ -64,11 +64,17 @@ class QueryClawDingTalkHandler(CallbackHandler):
 
             sender_id = chatbot_msg.sender_staff_id or chatbot_msg.sender_id
             sender_name = chatbot_msg.sender_nick or "Unknown"
+            conversation_id = message.data.get("conversationId", "")
+            conversation_type = message.data.get("conversationType", "1")
 
             logger.info("Received DingTalk message from {} ({}): {}", sender_name, sender_id, content)
 
             task = asyncio.create_task(
-                self.channel._on_message(content, sender_id, sender_name)
+                self.channel._on_message(
+                    content, sender_id, sender_name,
+                    conversation_id=conversation_id,
+                    conversation_type=conversation_type,
+                )
             )
             self.channel._background_tasks.add(task)
             task.add_done_callback(self.channel._background_tasks.discard)
@@ -179,47 +185,80 @@ class DingTalkChannel(BaseChannel):
             return None
 
     async def send(self, msg: OutboundMessage) -> None:
-        """Send a message through DingTalk."""
+        """Send a message through DingTalk.
+
+        Automatically selects the correct API based on conversation type:
+        - Group chat ("2"): POST /v1.0/robot/groupMessages/send
+        - 1:1 chat ("1"):   POST /v1.0/robot/oToMessages/batchSend
+        """
         token = await self._get_access_token()
         if not token:
             return
-
-        url = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
-        headers = {"x-acs-dingtalk-access-token": token}
-        data = {
-            "robotCode": self.config.client_id,
-            "userIds": [msg.chat_id],
-            "msgKey": "sampleMarkdown",
-            "msgParam": json.dumps(
-                {"text": msg.content, "title": "QueryClaw Reply"},
-                ensure_ascii=False,
-            ),
-        }
 
         if not self._http:
             logger.warning("DingTalk HTTP client not initialized, cannot send")
             return
 
+        metadata = msg.metadata or {}
+        conversation_type = metadata.get("conversation_type", "1")
+        headers = {"x-acs-dingtalk-access-token": token}
+
+        if conversation_type == "2":
+            url = "https://api.dingtalk.com/v1.0/robot/groupMessages/send"
+            data = {
+                "robotCode": self.config.client_id,
+                "openConversationId": msg.chat_id,
+                "msgKey": "sampleMarkdown",
+                "msgParam": json.dumps(
+                    {"text": msg.content, "title": "QueryClaw"},
+                    ensure_ascii=False,
+                ),
+            }
+        else:
+            url = "https://api.dingtalk.com/v1.0/robot/oToMessages/batchSend"
+            data = {
+                "robotCode": self.config.client_id,
+                "userIds": [msg.chat_id],
+                "msgKey": "sampleMarkdown",
+                "msgParam": json.dumps(
+                    {"text": msg.content, "title": "QueryClaw"},
+                    ensure_ascii=False,
+                ),
+            }
+
         try:
             resp = await self._http.post(url, json=data, headers=headers)
             if resp.status_code != 200:
-                logger.error("DingTalk send failed: {}", resp.text)
+                logger.error("DingTalk send failed (type={}): {}", conversation_type, resp.text)
             else:
-                logger.debug("DingTalk message sent to {}", msg.chat_id)
+                logger.debug("DingTalk message sent to {} (type={})", msg.chat_id, conversation_type)
         except Exception as e:
             logger.error("Error sending DingTalk message: {}", e)
 
-    async def _on_message(self, content: str, sender_id: str, sender_name: str) -> None:
+    async def _on_message(
+        self,
+        content: str,
+        sender_id: str,
+        sender_name: str,
+        conversation_id: str = "",
+        conversation_type: str = "1",
+    ) -> None:
         """Handle incoming message (called by QueryClawDingTalkHandler)."""
         try:
-            logger.info("DingTalk inbound: {} from {}", content, sender_name)
+            chat_id = conversation_id if conversation_type == "2" else sender_id
+            logger.info(
+                "DingTalk inbound: {} from {} (type={}, chat={})",
+                content, sender_name, conversation_type, chat_id,
+            )
             await self._handle_message(
                 sender_id=sender_id,
-                chat_id=sender_id,
+                chat_id=chat_id,
                 content=str(content),
                 metadata={
                     "sender_name": sender_name,
                     "platform": "dingtalk",
+                    "conversation_type": conversation_type,
+                    "conversation_id": conversation_id,
                 },
             )
         except Exception as e:

@@ -19,6 +19,27 @@ from queryclaw.db.base import (
 
 _MAX_RECONNECT_ATTEMPTS = 2
 
+# MySQL CR_* error codes that indicate the TCP connection is broken.
+# Only these should trigger a close + reconnect; SQL/schema errors should not.
+_MYSQL_CONNECTION_ERROR_CODES = frozenset({
+    2006,  # CR_SERVER_GONE_ERROR – server went away
+    2013,  # CR_SERVER_LOST – lost connection during query
+    2014,  # CR_COMMANDS_OUT_OF_SYNC – out-of-sync protocol state
+    2055,  # CR_SERVER_LOST_EXTENDED
+})
+
+
+def _is_connection_error(exc: Exception) -> bool:
+    """Return True only if *exc* signals a broken TCP/MySQL connection."""
+    errno = getattr(exc, "args", (None,))[0] if exc.args else None
+    if isinstance(errno, int) and errno in _MYSQL_CONNECTION_ERROR_CODES:
+        return True
+    # aiomysql wraps some errors; check the inner cause as well
+    cause = getattr(exc, "__cause__", None) or getattr(exc, "__context__", None)
+    if cause is not None:
+        return _is_connection_error(cause)
+    return False
+
 
 class MySQLAdapter(SQLAdapter):
     """Async MySQL adapter using aiomysql."""
@@ -107,6 +128,11 @@ class MySQLAdapter(SQLAdapter):
                 await asyncio.sleep(0.5)  # Allow server to release the broken connection
             except Exception as e:
                 last_error = e
+                # Only retry/reconnect for actual connection-level errors.
+                # SQL/schema errors (unknown column, syntax error, constraint violation, etc.)
+                # leave the connection intact — retrying will always fail the same way.
+                if not _is_connection_error(e):
+                    raise
                 logger.warning("MySQL execute failed (attempt {}/{}): {}", attempt + 1, _MAX_RECONNECT_ATTEMPTS, e)
                 self._close_conn()
         raise last_error  # type: ignore[misc]

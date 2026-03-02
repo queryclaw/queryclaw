@@ -19,6 +19,12 @@ When the user asks to generate test data, follow these steps:
 
 ## 3. Generate Data Strategy
 
+> **CRITICAL**: Only use column names **exactly as returned** by `describe_table`.
+> Never invent column names based on business intuition (e.g. do not assume
+> `trans_time`, `pay_status`, `account_name`, `score`, etc. exist — always
+> confirm from the schema first). If the column you need does not exist, omit
+> it or ask the user.
+
 Based on column types and names, generate realistic data:
 
 | Column pattern | Generation strategy |

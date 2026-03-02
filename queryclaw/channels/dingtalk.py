@@ -185,7 +185,7 @@ class DingTalkChannel(BaseChannel):
                 logger.info("DingTalk stream connected to {}", endpoint)
 
                 uri = f"{endpoint}?ticket={quote_plus(ticket)}"
-                async with websockets.connect(uri) as ws:
+                async with websockets.connect(uri, ping_interval=None) as ws:
                     self._client.websocket = ws
                     self._connected = True
                     self._reconnect_count = 0

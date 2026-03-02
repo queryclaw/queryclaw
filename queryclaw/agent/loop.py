@@ -206,6 +206,22 @@ class AgentLoop:
                 max_tokens=self.max_tokens,
             )
 
+            if log_prompt:
+                if response.has_tool_calls:
+                    calls_summary = ", ".join(
+                        f"{tc.name}({json.dumps(tc.arguments, ensure_ascii=False)})"
+                        for tc in response.tool_calls
+                    )
+                    logger.info(
+                        "LLM response (iteration {}) [tool_calls]: {}",
+                        iteration, calls_summary,
+                    )
+                else:
+                    logger.info(
+                        "LLM response (iteration {}):\n{}",
+                        iteration, response.content or "(empty)",
+                    )
+
             if response.has_tool_calls:
                 assistant_msg: dict[str, Any] = {"role": "assistant", "content": response.content}
                 assistant_msg["tool_calls"] = [
